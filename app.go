@@ -195,11 +195,15 @@ func getPossibleMoves(currentState state, myPlayerId int) (possibleMoves []move)
 
 func getPossibleRemoves(currentState state, myPlayerId int) (possibleRemoves []coord) {
 	// a player can remove any tile that is not occupied by a pawn and not already removed
-	for y := 0; y < HEIGHT; y++ {
-		for x := 0; x < WIDTH; x++ {
-			if !isTileOccupied(currentState, coord{x, y}) && !isTileRemoved(currentState, coord{x, y}) {
-				possibleRemoves = append(possibleRemoves, coord{x, y})
-			}
+	// it's better to only remove tiles that are adjacent to the opponent's pawn
+
+	opponentPosition := currentState.playersPosition[1-myPlayerId]
+
+	adjacentTiles := getAdjacentTiles(opponentPosition)
+
+	for _, adjacentTile := range adjacentTiles {
+		if !isTileOccupied(currentState, adjacentTile) && !isTileRemoved(currentState, adjacentTile) {
+			possibleRemoves = append(possibleRemoves, adjacentTile)
 		}
 	}
 
