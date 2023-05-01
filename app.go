@@ -70,6 +70,11 @@ type state struct {
 	boardRemoved    [HEIGHT][WIDTH]bool
 }
 
+type move struct {
+	movePosition coord
+	removeTile   coord
+}
+
 func debug(s string) {
 	fmt.Fprintln(os.Stderr, s)
 }
@@ -128,7 +133,117 @@ func main() {
 
 		debugAny("current state", currentState)
 
+		bestMove, bestScore := findBestMove(currentState, myPlayerId)
+
+		debugAny("best move", bestMove)
+		debugAny("best score", bestScore)
+
+		currentState.playersPosition[myPlayerId] = bestMove.movePosition
+
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
 		fmt.Println("RANDOM;MESSAGE") // Write action to stdout
 	}
+}
+
+func findBestMove(currentState state, myPlayerId int) (bestMove move, bestScore int) {
+	possibleMoves := getPossibleMoves(currentState, myPlayerId)
+
+	for _, move := range possibleMoves {
+		score := getScore(currentState, move, myPlayerId)
+		if score > bestScore {
+			bestScore = score
+			bestMove = move
+		}
+	}
+
+	return
+}
+
+func applyMove(currentState state, movePosition coord, myPlayerId int) state {
+	nextState := currentState
+
+	nextState.playersPosition[myPlayerId] = movePosition
+
+	return nextState
+}
+
+func getPossibleMoves(currentState state, myPlayerId int) (possibleMoves []move) {
+	myPosition := currentState.playersPosition[myPlayerId]
+
+	adjacentTiles := getAdjacentTiles(myPosition)
+
+	for _, adjacentTile := range adjacentTiles {
+		if !isTileOccupied(currentState, adjacentTile) && !isTileRemoved(currentState, adjacentTile) {
+			nextState := applyMove(currentState, adjacentTile, myPlayerId)
+
+			possibleRemoves := getPossibleRemoves(nextState, myPlayerId)
+
+			for _, possibleRemove := range possibleRemoves {
+				possibleMoves = append(possibleMoves, move{adjacentTile, possibleRemove})
+			}
+		}
+	}
+
+	return
+}
+
+func getPossibleRemoves(currentState state, myPlayerId int) (possibleRemoves []coord) {
+	// a player can remove any tile that is not occupied by a pawn and not already removed
+	for y := 0; y < HEIGHT; y++ {
+		for x := 0; x < WIDTH; x++ {
+			if !isTileOccupied(currentState, coord{x, y}) && !isTileRemoved(currentState, coord{x, y}) {
+				possibleRemoves = append(possibleRemoves, coord{x, y})
+			}
+		}
+	}
+
+	return
+}
+
+func getAdjacentTiles(position coord) (adjacentTiles []coord) {
+	coords := []coord{
+		{position.x - 1, position.y - 1},
+		{position.x - 1, position.y},
+		{position.x - 1, position.y + 1},
+		{position.x, position.y - 1},
+		{position.x, position.y + 1},
+		{position.x + 1, position.y - 1},
+		{position.x + 1, position.y},
+		{position.x + 1, position.y + 1},
+	}
+
+	for _, coord := range coords {
+		if coord.x >= 0 && coord.x < WIDTH && coord.y >= 0 && coord.y < HEIGHT {
+			adjacentTiles = append(adjacentTiles, coord)
+		}
+	}
+
+	return
+}
+
+func isTileOccupied(currentState state, position coord) bool {
+	for _, playerPosition := range currentState.playersPosition {
+		if playerPosition == position {
+			return true
+		}
+	}
+
+	return false
+}
+
+func isTileRemoved(currentState state, position coord) bool {
+	return currentState.boardRemoved[position.y][position.x]
+}
+
+func getScore(currentState state, move move, myPlayerId int) int {
+	// a good move is a move that maximize my player possible moves and minimize the opponent possible moves
+
+	nextState := currentState
+	nextState.playersPosition[myPlayerId] = move.movePosition
+	nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
+
+	myPossibleMoves := getPossibleMoves(nextState, myPlayerId)
+	opponentPossibleMoves := getPossibleMoves(nextState, 1-myPlayerId)
+
+	return len(myPossibleMoves) - len(opponentPossibleMoves)
 }
