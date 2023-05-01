@@ -141,7 +141,7 @@ func main() {
 		currentState.playersPosition[myPlayerId] = bestMove.movePosition
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
-		fmt.Println("RANDOM;MESSAGE") // Write action to stdout
+		fmt.Println(fmt.Sprintf("%d %d %d %d", bestMove.movePosition.x, bestMove.movePosition.y, bestMove.removeTile.x, bestMove.removeTile.y)) // action: "x y" to move or "x y message" to move and speak
 	}
 }
 
