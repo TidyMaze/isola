@@ -138,7 +138,7 @@ func main() {
 		debugAny("best move", bestMove)
 		debugAny("best score", bestScore)
 
-		currentState.playersPosition[myPlayerId] = bestMove.movePosition
+		currentState = applyMove(currentState, bestMove.movePosition, myPlayerId)
 		currentState.boardRemoved[bestMove.removeTile.y][bestMove.removeTile.x] = true
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
