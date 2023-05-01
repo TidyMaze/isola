@@ -11,7 +11,7 @@ The goal of the game is to block the opponent's pawn.
 
  	Rules
 Board:
-The game is played on a 9 x 9 board.
+The game is played on a 9 x 9 boardRemoved.
 
 Player 0 always starts at (0, 4) and player 1 at (8, 4).
 
@@ -67,7 +67,7 @@ type coord struct {
 
 type state struct {
 	playersPosition [2]coord
-	board           [HEIGHT][WIDTH]bool
+	boardRemoved    [HEIGHT][WIDTH]bool
 }
 
 func debug(s string) {
@@ -102,10 +102,8 @@ func main() {
 
 	currentState := state{
 		playersPosition: [2]coord{playerPosition, opponentPosition},
-		board:           [HEIGHT][WIDTH]bool{},
+		boardRemoved:    [HEIGHT][WIDTH]bool{},
 	}
-
-	debugAny("current state", currentState)
 
 	for {
 		var opponentPositionX int
@@ -121,6 +119,14 @@ func main() {
 		// opponentLastRemovedTileY: coordinates of the last removed tile. (-1 -1) if no tile has been removed.
 		var opponentLastRemovedTileY int
 		fmt.Scan(&opponentLastRemovedTileY)
+
+		if opponentLastRemovedTileX != -1 && opponentLastRemovedTileY != -1 {
+			currentState.boardRemoved[opponentLastRemovedTileY][opponentLastRemovedTileX] = true
+		}
+
+		currentState.playersPosition[1-myPlayerId] = coord{opponentPositionX, opponentPositionY}
+
+		debugAny("current state", currentState)
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
 		fmt.Println("RANDOM;MESSAGE") // Write action to stdout
