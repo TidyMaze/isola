@@ -241,14 +241,45 @@ func isTileRemoved(currentState state, position coord) bool {
 	return currentState.boardRemoved[position.y][position.x]
 }
 
-func getScore(currentState state, move move, myPlayerId int) int {
-	// a good move is a move that maximize my player possible moves and minimize the opponent possible moves
+func getPartition(currentState state) (partition [2][]coord) {
+	// we use a BFS to find all the tiles that are reachable from a player
+	// we use a BFS to find all the tiles that are reachable from a player
+	for playerId, playerPosition := range currentState.playersPosition {
+		visited := [HEIGHT][WIDTH]bool{}
+		queue := []coord{playerPosition}
 
+		for len(queue) > 0 {
+			currentPosition := queue[0]
+			queue = queue[1:]
+
+			if !visited[currentPosition.y][currentPosition.x] {
+				visited[currentPosition.y][currentPosition.x] = true
+
+				partition[playerId] = append(partition[playerId], currentPosition)
+
+				adjacentTiles := getAdjacentTiles(currentPosition)
+
+				for _, adjacentTile := range adjacentTiles {
+					if !isTileOccupied(currentState, adjacentTile) && !isTileRemoved(currentState, adjacentTile) {
+						queue = append(queue, adjacentTile)
+					}
+				}
+			}
+		}
+	}
+
+	return
+}
+
+func getScore(currentState state, move move, myPlayerId int) int {
 	nextState := applyMove(currentState, move.movePosition, myPlayerId)
 	nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
 
-	myPossibleMoves := getPossibleMoves(nextState, myPlayerId)
-	opponentPossibleMoves := getPossibleMoves(nextState, 1-myPlayerId)
+	// a good move is a move that maximize my player closest coords and minimize opponent closest coords
+	partition := getPartition(nextState)
 
-	return len(myPossibleMoves) - len(opponentPossibleMoves)
+	myPlayerPartition := partition[myPlayerId]
+	opponentPartition := partition[1-myPlayerId]
+
+	return len(myPlayerPartition) - len(opponentPartition)
 }
