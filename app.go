@@ -146,7 +146,7 @@ func main() {
 }
 
 func findBestMove(currentState state, myPlayerId int) (bestMove move, bestScore int) {
-	bestScore = -10
+	bestScore = -1000
 
 	possibleMoves := getPossibleMoves(currentState, myPlayerId)
 
@@ -155,18 +155,21 @@ func findBestMove(currentState state, myPlayerId int) (bestMove move, bestScore 
 		if score > bestScore {
 			bestScore = score
 			bestMove = move
+
+			debugAny("found a better move", bestMove)
+			debugAny("found a better score", bestScore)
 		}
 	}
 
 	return
 }
 
-func applyMove(currentState state, movePosition coord, myPlayerId int) state {
-	nextState := currentState
+func applyMove(currentState state, movePosition coord, myPlayerId int) (nextState state) {
+	nextState = currentState
 
 	nextState.playersPosition[myPlayerId] = movePosition
 
-	return nextState
+	return
 }
 
 func getPossibleMoves(currentState state, myPlayerId int) (possibleMoves []move) {
@@ -240,8 +243,7 @@ func isTileRemoved(currentState state, position coord) bool {
 func getScore(currentState state, move move, myPlayerId int) int {
 	// a good move is a move that maximize my player possible moves and minimize the opponent possible moves
 
-	nextState := currentState
-	nextState.playersPosition[myPlayerId] = move.movePosition
+	nextState := applyMove(currentState, move.movePosition, myPlayerId)
 	nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
 
 	myPossibleMoves := getPossibleMoves(nextState, myPlayerId)
