@@ -139,6 +139,7 @@ func main() {
 		debugAny("best score", bestScore)
 
 		currentState.playersPosition[myPlayerId] = bestMove.movePosition
+		currentState.boardRemoved[bestMove.removeTile.y][bestMove.removeTile.x] = true
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
 		fmt.Println(fmt.Sprintf("%d %d %d %d", bestMove.movePosition.x, bestMove.movePosition.y, bestMove.removeTile.x, bestMove.removeTile.y)) // action: "x y" to move or "x y message" to move and speak
