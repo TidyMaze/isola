@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 /**
  *  	The Goal
@@ -53,6 +56,28 @@ Response time first turn is ≤ 1000 ms.
 Response time per turn is ≤ 100 ms.
  **/
 
+// constant values
+const WIDTH = 9
+const HEIGHT = 9
+
+type coord struct {
+	x int
+	y int
+}
+
+type state struct {
+	playersPosition [2]coord
+	board           [HEIGHT][WIDTH]bool
+}
+
+func debug(s string) {
+	fmt.Fprintln(os.Stderr, s)
+}
+
+func debugAny(message string, any interface{}) {
+	fmt.Fprintf(os.Stderr, "%s: %v\n", message, any)
+}
+
 func main() {
 	var playerPositionX int
 	fmt.Scan(&playerPositionX)
@@ -60,6 +85,27 @@ func main() {
 	// playerPositionY: player's coordinates.
 	var playerPositionY int
 	fmt.Scan(&playerPositionY)
+
+	playerPosition := coord{playerPositionX, playerPositionY}
+
+	myPlayerId := 0
+
+	if playerPositionY == 0 {
+		myPlayerId = 1
+	}
+
+	opponentPosition := coord{8, 4}
+
+	if myPlayerId == 1 {
+		opponentPosition = coord{0, 4}
+	}
+
+	currentState := state{
+		playersPosition: [2]coord{playerPosition, opponentPosition},
+		board:           [HEIGHT][WIDTH]bool{},
+	}
+
+	debugAny("current state", currentState)
 
 	for {
 		var opponentPositionX int
