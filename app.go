@@ -193,6 +193,19 @@ func getPossibleMoves(currentState state, myPlayerId int) (possibleMoves []move)
 	return
 }
 
+//func getPossibleRemoves(currentState state, myPlayerId int) (possibleRemoves []coord) {
+//	// a player can remove any tile that is not occupied by a pawn and not already removed
+//	for y := 0; y < HEIGHT; y++ {
+//		for x := 0; x < WIDTH; x++ {
+//			if !isTileOccupied(currentState, coord{x, y}) && !isTileRemoved(currentState, coord{x, y}) {
+//				possibleRemoves = append(possibleRemoves, coord{x, y})
+//			}
+//		}
+//	}
+//
+//	return
+//}
+
 func getPossibleRemoves(currentState state, myPlayerId int) (possibleRemoves []coord) {
 	// a player can remove any tile that is not occupied by a pawn and not already removed
 	// it's better to only remove tiles that are adjacent to the opponent's pawn
@@ -247,7 +260,6 @@ func isTileRemoved(currentState state, position coord) bool {
 
 func getPartition(currentState state) (partition [2][]coord) {
 	// we use a BFS to find all the tiles that are reachable from a player
-	// we use a BFS to find all the tiles that are reachable from a player
 	for playerId, playerPosition := range currentState.playersPosition {
 		visited := [HEIGHT][WIDTH]bool{}
 		queue := []coord{playerPosition}
@@ -287,3 +299,15 @@ func getScore(currentState state, move move, myPlayerId int) int {
 
 	return len(myPlayerPartition) - len(opponentPartition)
 }
+
+//func getScore(currentState state, move move, myPlayerId int) int {
+//	// a good move is a move that maximize my player possible moves and minimize the opponent possible moves
+//
+//	nextState := applyMove(currentState, move.movePosition, myPlayerId)
+//	nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
+//
+//	myPossibleMoves := getPossibleMoves(nextState, myPlayerId)
+//	opponentPossibleMoves := getPossibleMoves(nextState, 1-myPlayerId)
+//
+//	return len(myPossibleMoves) - len(opponentPossibleMoves)
+//}
