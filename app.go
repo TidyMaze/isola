@@ -229,6 +229,8 @@ func applyAction(state state, action action, playerId int) (nextState state) {
 	return
 }
 
+var possibleRemoves []coord
+
 func getPossibleActions(currentState state, playerId int) (possibleActions []action) {
 	myPosition := currentState.playersPosition[playerId]
 
@@ -240,7 +242,7 @@ func getPossibleActions(currentState state, playerId int) (possibleActions []act
 
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
 
-			possibleRemoves := getPossibleRemoves(nextState)
+			getPossibleRemoves(nextState, &possibleRemoves)
 
 			//// sort possible removes by distance to opponent
 			//oppoPosition := nextState.playersPosition[1-playerId]
@@ -277,21 +279,20 @@ func distance(coord1 coord, coord2 coord) int {
 //	return
 //}
 
-func getPossibleRemoves(currentState state) []coord {
+func getPossibleRemoves(currentState state, possibleRemoves *[]coord) {
 
-	possibleRemoves := make([]coord, 0, HEIGHT*WIDTH)
+	// empty possible removes
+	*possibleRemoves = (*possibleRemoves)[:0]
 
 	// a player can remove any tile that is not occupied by a pawn and not already removed
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
 			c := coord{x, y}
 			if !isTileOccupied(currentState, c) && !isTileRemoved(currentState, c) {
-				possibleRemoves = append(possibleRemoves, c)
+				*possibleRemoves = append(*possibleRemoves, c)
 			}
 		}
 	}
-
-	return possibleRemoves
 }
 
 func getAdjacentTiles(position coord) (adjacentTiles []coord) {
