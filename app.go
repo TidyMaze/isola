@@ -61,6 +61,8 @@ Response time per turn is ≤ 100 ms.
 
 const LOCAL = true
 
+const DEPTH = 2
+
 // constant values
 const WIDTH = 9
 const HEIGHT = 9
@@ -204,7 +206,7 @@ func findBestMove(currentState state, myPlayerId int) (bestAction action, bestSc
 
 		nextState := applyAction(currentState, action, myPlayerId)
 
-		score := alphaBeta(nextState, 1, -1000000, 1000000, myPlayerId, 1-myPlayerId)
+		score := alphaBeta(nextState, DEPTH, -1000000, 1000000, myPlayerId, 1-myPlayerId)
 		if score > bestScore {
 			bestScore = score
 			bestAction = action
