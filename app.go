@@ -395,7 +395,7 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 		alpha = max(alpha, nodeScore)
 	}
 
-	return alpha
+	return nodeScore
 }
 
 func max(a int, b int) int {
