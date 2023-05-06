@@ -182,18 +182,18 @@ func applyMove(state state, move move, playerId int) (nextState state) {
 	return
 }
 
-func getPossibleMoves(currentState state, myPlayerId int) (possibleMoves []move) {
-	myPosition := currentState.playersPosition[myPlayerId]
+func getPossibleMoves(currentState state, playerId int) (possibleMoves []move) {
+	myPosition := currentState.playersPosition[playerId]
 
 	adjacentTiles := getAdjacentTiles(myPosition)
 
 	for _, adjacentTile := range adjacentTiles {
 		if !isTileOccupied(currentState, adjacentTile) && !isTileRemoved(currentState, adjacentTile) {
-			nextState := applyMoveOnly(currentState, adjacentTile, myPlayerId)
+			nextState := applyMoveOnly(currentState, adjacentTile, playerId)
 
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
 
-			possibleRemoves := getPossibleRemoves(nextState, myPlayerId)
+			possibleRemoves := getPossibleRemoves(nextState, playerId)
 
 			//debugAny(fmt.Sprintf("possible removes for %v", adjacentTile), possibleRemoves)
 
