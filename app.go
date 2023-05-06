@@ -276,7 +276,10 @@ func distance(coord1 coord, coord2 coord) int {
 //	return
 //}
 
-func getPossibleRemoves(currentState state) (possibleRemoves []coord) {
+func getPossibleRemoves(currentState state) []coord {
+
+	possibleRemoves := make([]coord, 0, HEIGHT*WIDTH)
+
 	// a player can remove any tile that is not occupied by a pawn and not already removed
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
@@ -287,7 +290,7 @@ func getPossibleRemoves(currentState state) (possibleRemoves []coord) {
 		}
 	}
 
-	return
+	return possibleRemoves
 }
 
 func getAdjacentTiles(position coord) (adjacentTiles []coord) {
