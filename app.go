@@ -349,6 +349,8 @@ func isTileRemoved(currentState *state, position *coord) bool {
 
 var queueCache []coord
 
+var distanceFromPlayer [2][WIDTH * HEIGHT]int
+
 func getPartition(currentState state) (partition [][]int) {
 	// we use a BFS to find all the tiles that are reachable from a player
 
@@ -361,18 +363,20 @@ func getPartition(currentState state) (partition [][]int) {
 		}
 	}
 
-	distanceFromPlayer := make([][][2]int, HEIGHT)
-	for y := 0; y < HEIGHT; y++ {
-		distanceFromPlayer[y] = make([][2]int, WIDTH)
-		for x := 0; x < WIDTH; x++ {
-			distanceFromPlayer[y][x] = [2]int{-1, -1}
-		}
+	for i := 0; i < WIDTH*HEIGHT; i++ {
+		distanceFromPlayer[0][i] = -1
+		distanceFromPlayer[1][i] = -1
 	}
 
 	// for each player, find the distance to each tile using BFS
 	for playerId := 0; playerId < 2; playerId++ {
 		queueCache = queueCache[:0]
-		distanceFromPlayer[currentState.playersPosition[playerId].y][currentState.playersPosition[playerId].x][playerId] = 0
+
+		if playerId == 0 {
+			distanceFromPlayer[playerId][currentState.playersPosition[playerId].y*WIDTH+currentState.playersPosition[playerId].x] = 0
+		} else {
+			distanceFromPlayer[playerId][currentState.playersPosition[playerId].y*WIDTH+currentState.playersPosition[playerId].x] = 0
+		}
 
 		for len(queueCache) > 0 {
 			currentPosition := queueCache[0]
@@ -382,8 +386,9 @@ func getPartition(currentState state) (partition [][]int) {
 			adjacentTiles := getAdjacentTiles(currentPosition)
 			for iAdjacentTile := 0; iAdjacentTile < len(adjacentTiles); iAdjacentTile++ {
 				adj := adjacentTiles[iAdjacentTile]
-				if !isTileOccupied(&currentState, &adj) && !isTileRemoved(&currentState, &adj) && distanceFromPlayer[adj.y][adj.x][playerId] == -1 {
-					distanceFromPlayer[adj.y][adj.x][playerId] = distanceFromPlayer[currentPosition.y][currentPosition.x][playerId] + 1
+
+				if !isTileOccupied(&currentState, &adj) && !isTileRemoved(&currentState, &adj) && distanceFromPlayer[playerId][adj.y*WIDTH+adj.x] == -1 {
+					distanceFromPlayer[playerId][adj.y*WIDTH+adj.x] = distanceFromPlayer[playerId][currentPosition.y*WIDTH+currentPosition.x] + 1
 					queueCache = append(queueCache, adj)
 				}
 			}
@@ -393,18 +398,18 @@ func getPartition(currentState state) (partition [][]int) {
 	// for each tile, find the closest player
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
-			if distanceFromPlayer[y][x][0] == -1 && distanceFromPlayer[y][x][1] == -1 {
+			if distanceFromPlayer[0][y*WIDTH+x] == -1 && distanceFromPlayer[1][y*WIDTH+x] == -1 {
 				// if the tile is not reachable by any player, it is not part of the partition
 				continue
 			}
 
-			if distanceFromPlayer[y][x][0] == -1 && distanceFromPlayer[y][x][1] != -1 {
+			if distanceFromPlayer[0][y*WIDTH+x] == -1 && distanceFromPlayer[1][y*WIDTH+x] != -1 {
 				partition[y][x] = 1
-			} else if distanceFromPlayer[y][x][0] != -1 && distanceFromPlayer[y][x][1] == -1 {
+			} else if distanceFromPlayer[0][y*WIDTH+x] != -1 && distanceFromPlayer[1][y*WIDTH+x] == -1 {
 				partition[y][x] = 0
-			} else if distanceFromPlayer[y][x][0] < distanceFromPlayer[y][x][1] {
+			} else if distanceFromPlayer[0][y*WIDTH+x] < distanceFromPlayer[1][y*WIDTH+x] {
 				partition[y][x] = 0
-			} else if distanceFromPlayer[y][x][0] > distanceFromPlayer[y][x][1] {
+			} else if distanceFromPlayer[0][y*WIDTH+x] > distanceFromPlayer[1][y*WIDTH+x] {
 				partition[y][x] = 1
 			}
 		}
