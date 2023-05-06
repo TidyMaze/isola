@@ -240,7 +240,7 @@ func getPossibleActions(currentState state, playerId int) []action {
 	adjacentTiles := getAdjacentTiles(myPosition)
 
 	for _, adjacentTile := range adjacentTiles {
-		if !isTileOccupied(currentState, adjacentTile) && !isTileRemoved(currentState, adjacentTile) {
+		if !isTileOccupied(&currentState, &adjacentTile) && !isTileRemoved(&currentState, &adjacentTile) {
 			nextState := applyMove(currentState, adjacentTile, playerId)
 
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
@@ -252,7 +252,7 @@ func getPossibleActions(currentState state, playerId int) []action {
 			for y := 0; y < HEIGHT; y++ {
 				for x := 0; x < WIDTH; x++ {
 					c := coord{x, y}
-					if !isTileOccupied(nextState, c) && !isTileRemoved(nextState, c) {
+					if !isTileOccupied(&nextState, &c) && !isTileRemoved(&nextState, &c) {
 						possibleActionsCache = append(possibleActionsCache, action{adjacentTile, c})
 					}
 				}
@@ -328,11 +328,11 @@ func getAdjacentTiles(position coord) (adjacentTiles []coord) {
 	return
 }
 
-func isTileOccupied(currentState state, position coord) bool {
-	return currentState.playersPosition[0] == position || currentState.playersPosition[1] == position
+func isTileOccupied(currentState *state, position *coord) bool {
+	return currentState.playersPosition[0] == *position || currentState.playersPosition[1] == *position
 }
 
-func isTileRemoved(currentState state, position coord) bool {
+func isTileRemoved(currentState *state, position *coord) bool {
 	return currentState.boardRemoved[position.y][position.x]
 }
 
@@ -371,7 +371,7 @@ func getPartition(currentState state) (partition [][]int) {
 			adjacentTiles := getAdjacentTiles(currentPosition)
 			for iAdjacentTile := 0; iAdjacentTile < len(adjacentTiles); iAdjacentTile++ {
 				adj := adjacentTiles[iAdjacentTile]
-				if !isTileOccupied(currentState, adj) && !isTileRemoved(currentState, adj) && distanceFromPlayer[adj.y][adj.x][playerId] == -1 {
+				if !isTileOccupied(&currentState, &adj) && !isTileRemoved(&currentState, &adj) && distanceFromPlayer[adj.y][adj.x][playerId] == -1 {
 					distanceFromPlayer[adj.y][adj.x][playerId] = distanceFromPlayer[currentPosition.y][currentPosition.x][playerId] + 1
 					queueCache = append(queueCache, adj)
 				}
