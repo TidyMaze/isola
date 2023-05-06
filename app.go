@@ -359,5 +359,5 @@ func getScore(currentState state, move move, myPlayerId int) int {
 		bonusEnd -= 500
 	}
 
-	return bonusEnd + myPlayerCellsCount - opponentCellsCount
+	return bonusEnd + myPlayerCellsCount - opponentCellsCount + len(myPossibleMoves) - len(opponentPossibleMoves)
 }
