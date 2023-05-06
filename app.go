@@ -6,7 +6,6 @@ import (
 	"os"
 	"runtime/pprof"
 	_ "runtime/pprof"
-	"time"
 )
 
 /**
@@ -111,11 +110,13 @@ func mainLocal() {
 	}
 
 	// stop after 10 seconds
-	time.AfterFunc(5*time.Second, func() {
-		println("stopping profiling after 5 seconds")
-		pprof.StopCPUProfile()
-		f.Close()
-	})
+	//time.AfterFunc(5*time.Second, func() {
+	//	println("stopping profiling after 5 seconds")
+	//	pprof.StopCPUProfile()
+	//	f.Close()
+	//})
+
+	defer pprof.StopCPUProfile()
 
 	state := state{
 		playersPosition: [2]coord{{0, 4}, {8, 4}},
@@ -203,7 +204,7 @@ func findBestMove(currentState state, myPlayerId int) (bestAction action, bestSc
 
 		nextState := applyAction(currentState, action, myPlayerId)
 
-		score := alphaBeta(nextState, 2, -1000000, 1000000, myPlayerId, 1-myPlayerId)
+		score := alphaBeta(nextState, 1, -1000000, 1000000, myPlayerId, 1-myPlayerId)
 		if score > bestScore {
 			bestScore = score
 			bestAction = action
