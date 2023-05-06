@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"strconv"
 )
 
 /**
@@ -258,49 +259,50 @@ func isTileRemoved(currentState state, position coord) bool {
 	return currentState.boardRemoved[position.y][position.x]
 }
 
-func getPartition(currentState state) (partition [2][]coord) {
+func getPartition(currentState state) (partition [][]int) {
 	// we use a BFS to find all the tiles that are reachable from a player
+
+	// initialize the partition to -1
+	partition = make([][]int, HEIGHT)
+	for y := 0; y < HEIGHT; y++ {
+		partition[y] = make([]int, WIDTH)
+		for x := 0; x < WIDTH; x++ {
+			partition[y][x] = -1
+		}
+	}
+
+	// initialize the queue with the players' positions
+	queue := make([]coord, 0)
 	for playerId, playerPosition := range currentState.playersPosition {
-		visited := [HEIGHT][WIDTH]bool{}
-		queue := []coord{playerPosition}
+		partition[playerPosition.y][playerPosition.x] = playerId
+		queue = append(queue, playerPosition)
+	}
 
-		for len(queue) > 0 {
-			currentPosition := queue[0]
-			queue = queue[1:]
+	// BFS
+	for len(queue) > 0 {
+		currentPosition := queue[0]
+		queue = queue[1:]
 
-			if !visited[currentPosition.y][currentPosition.x] {
-				visited[currentPosition.y][currentPosition.x] = true
+		adjacentTiles := getAdjacentTiles(currentPosition)
 
-				partition[playerId] = append(partition[playerId], currentPosition)
-
-				adjacentTiles := getAdjacentTiles(currentPosition)
-
-				for _, adjacentTile := range adjacentTiles {
-					if !isTileOccupied(currentState, adjacentTile) && !isTileRemoved(currentState, adjacentTile) {
-						queue = append(queue, adjacentTile)
-					}
-				}
+		for _, adjacentTile := range adjacentTiles {
+			if partition[adjacentTile.y][adjacentTile.x] == -1 && !isTileRemoved(currentState, adjacentTile) {
+				partition[adjacentTile.y][adjacentTile.x] = partition[currentPosition.y][currentPosition.x]
+				queue = append(queue, adjacentTile)
 			}
 		}
 	}
 
 	// log the grid of the partition
 	debug("partition")
-	debugAny("partition", partition)
 
 	for y := 0; y < HEIGHT; y++ {
 		line := ""
 		for x := 0; x < WIDTH; x++ {
-			if isTileOccupied(currentState, coord{x, y}) {
-				line += "P"
-			} else if isTileRemoved(currentState, coord{x, y}) {
+			if currentState.boardRemoved[y][x] {
 				line += "X"
-			} else if contains(partition[0], coord{x, y}) {
-				line += "0"
-			} else if contains(partition[1], coord{x, y}) {
-				line += "1"
 			} else {
-				line += "."
+				line += strconv.Itoa(partition[y][x])
 			}
 		}
 		debug(line)
@@ -326,10 +328,20 @@ func getScore(currentState state, move move, myPlayerId int) int {
 	// a good move is a move that maximize my player closest coords and minimize opponent closest coords
 	partition := getPartition(nextState)
 
-	myPlayerPartition := partition[myPlayerId]
-	opponentPartition := partition[1-myPlayerId]
+	myPlayerCellsCount := 0
+	opponentCellsCount := 0
 
-	return len(myPlayerPartition) - len(opponentPartition)
+	for y := 0; y < HEIGHT; y++ {
+		for x := 0; x < WIDTH; x++ {
+			if partition[y][x] == myPlayerId {
+				myPlayerCellsCount++
+			} else if partition[y][x] == 1-myPlayerId {
+				opponentCellsCount++
+			}
+		}
+	}
+
+	return myPlayerCellsCount - opponentCellsCount
 }
 
 //func getScore(currentState state, move move, myPlayerId int) int {
