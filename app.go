@@ -159,7 +159,7 @@ func findBestMove(currentState state, myPlayerId int) (bestMove move, bestScore 
 		nextState := applyMove(currentState, move.movePosition, myPlayerId)
 		nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
 
-		score := alphaBeta(nextState, 1, -1000000, 1000000, 1-myPlayerId)
+		score := alphaBeta(nextState, 0, -1000000, 1000000, myPlayerId, 1-myPlayerId)
 		if score > bestScore {
 			bestScore = score
 			bestMove = move
@@ -368,14 +368,14 @@ func getScore(currentState state, move move, myPlayerId int) int {
 }
 
 // a minimax algorithm with alpha-beta pruning and negamax
-func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId int) (nodeScore int) {
+func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId int, playerId int) (nodeScore int) {
 	if depth == 0 {
 		// we reached the end of the tree, we return the score of the current state
 		return getScore(currentState, move{}, myPlayerId)
 	}
 
 	// we get all the possible moves
-	possibleMoves := getPossibleMoves(currentState, myPlayerId)
+	possibleMoves := getPossibleMoves(currentState, playerId)
 
 	// if there is no possible move, the game is over, we return the score of the current state
 	if len(possibleMoves) == 0 {
@@ -387,11 +387,11 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 	// for each possible move
 	for _, possibleMove := range possibleMoves {
 		// we get the score of the move by calling alphaBeta recursively
-		nextState := applyMove(currentState, possibleMove.movePosition, myPlayerId)
+		nextState := applyMove(currentState, possibleMove.movePosition, playerId)
 		nextState.boardRemoved[possibleMove.removeTile.y][possibleMove.removeTile.x] = true
 
 		// we get the score of the move by calling alphaBeta recursively
-		nodeScore = max(nodeScore, -alphaBeta(nextState, depth-1, -beta, -alpha, 1-myPlayerId))
+		nodeScore = max(nodeScore, -alphaBeta(nextState, depth-1, -beta, -alpha, myPlayerId, 1-playerId))
 
 		if nodeScore >= beta {
 			return nodeScore
