@@ -6,7 +6,7 @@ import (
 	"os"
 	"runtime/pprof"
 	_ "runtime/pprof"
-	"strconv"
+	"time"
 )
 
 /**
@@ -110,7 +110,12 @@ func mainLocal() {
 		panic(err)
 	}
 
-	defer pprof.StopCPUProfile()
+	// stop after 10 seconds
+	time.AfterFunc(5*time.Second, func() {
+		println("stopping profiling after 5 seconds")
+		pprof.StopCPUProfile()
+		f.Close()
+	})
 
 	state := state{
 		playersPosition: [2]coord{{0, 4}, {8, 4}},
@@ -343,9 +348,9 @@ func getPartition(currentState state) (partition [][]int) {
 	}
 
 	// for each player, find the distance to each tile using BFS
-	for playerId, playerPosition := range currentState.playersPosition {
-		queue := []coord{playerPosition}
-		distanceFromPlayer[playerPosition.y][playerPosition.x][playerId] = 0
+	for playerId := 0; playerId < 2; playerId++ {
+		queue := []coord{currentState.playersPosition[playerId]}
+		distanceFromPlayer[currentState.playersPosition[playerId].y][currentState.playersPosition[playerId].x][playerId] = 0
 
 		for len(queue) > 0 {
 			currentPosition := queue[0]
@@ -353,10 +358,10 @@ func getPartition(currentState state) (partition [][]int) {
 
 			// for each adjacent tile, if it is not occupied and not already visited, add it to the queue
 			adjacentTiles := getAdjacentTiles(currentPosition)
-			for _, adjacentTile := range adjacentTiles {
-				if !isTileOccupied(currentState, adjacentTile) && !isTileRemoved(currentState, adjacentTile) && distanceFromPlayer[adjacentTile.y][adjacentTile.x][playerId] == -1 {
-					distanceFromPlayer[adjacentTile.y][adjacentTile.x][playerId] = distanceFromPlayer[currentPosition.y][currentPosition.x][playerId] + 1
-					queue = append(queue, adjacentTile)
+			for iAdjacentTile := 0; iAdjacentTile < len(adjacentTiles); iAdjacentTile++ {
+				if !isTileOccupied(currentState, adjacentTiles[iAdjacentTile]) && !isTileRemoved(currentState, adjacentTiles[iAdjacentTile]) && distanceFromPlayer[adjacentTiles[iAdjacentTile].y][adjacentTiles[iAdjacentTile].x][playerId] == -1 {
+					distanceFromPlayer[adjacentTiles[iAdjacentTile].y][adjacentTiles[iAdjacentTile].x][playerId] = distanceFromPlayer[currentPosition.y][currentPosition.x][playerId] + 1
+					queue = append(queue, adjacentTiles[iAdjacentTile])
 				}
 			}
 		}
@@ -385,25 +390,25 @@ func getPartition(currentState state) (partition [][]int) {
 	//log the grid of the partition
 	//debug("partition")
 
-	for y := 0; y < HEIGHT; y++ {
-		line := ""
-		for x := 0; x < WIDTH; x++ {
-			// for each cell, padding of 2 characters
-
-			if currentState.playersPosition[0] == (coord{x, y}) {
-				line += "A"
-			} else if currentState.playersPosition[1] == (coord{x, y}) {
-				line += "B"
-			} else if currentState.boardRemoved[y][x] {
-				line += "X"
-			} else if partition[y][x] == -1 {
-				line += "."
-			} else {
-				line += strconv.Itoa(partition[y][x])
-			}
-		}
-		//debug(line)
-	}
+	//for y := 0; y < HEIGHT; y++ {
+	//	line := ""
+	//	for x := 0; x < WIDTH; x++ {
+	//		// for each cell, padding of 2 characters
+	//
+	//		if currentState.playersPosition[0] == (coord{x, y}) {
+	//			line += "A"
+	//		} else if currentState.playersPosition[1] == (coord{x, y}) {
+	//			line += "B"
+	//		} else if currentState.boardRemoved[y][x] {
+	//			line += "X"
+	//		} else if partition[y][x] == -1 {
+	//			line += "."
+	//		} else {
+	//			line += strconv.Itoa(partition[y][x])
+	//		}
+	//	}
+	//	debug(line)
+	//}
 
 	return
 }
