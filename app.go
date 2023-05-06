@@ -199,8 +199,8 @@ func findBestMove(currentState state, myPlayerId int) (bestAction action, bestSc
 
 	//debugAny("possible moves", possibleActions)
 
-	for iAction, action := range possibleActions {
-		debugAny(fmt.Sprintf("testing action %d/%d", iAction, len(possibleActions)), action)
+	for _, action := range possibleActions {
+		//debugAny(fmt.Sprintf("testing action %d/%d", iAction, len(possibleActions)), action)
 
 		nextState := applyAction(currentState, action, myPlayerId)
 
