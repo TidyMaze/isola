@@ -284,7 +284,39 @@ func getPartition(currentState state) (partition [2][]coord) {
 		}
 	}
 
+	// log the grid of the partition
+	debug("partition")
+	debugAny("partition", partition)
+
+	for y := 0; y < HEIGHT; y++ {
+		line := ""
+		for x := 0; x < WIDTH; x++ {
+			if isTileOccupied(currentState, coord{x, y}) {
+				line += "P"
+			} else if isTileRemoved(currentState, coord{x, y}) {
+				line += "X"
+			} else if contains(partition[0], coord{x, y}) {
+				line += "0"
+			} else if contains(partition[1], coord{x, y}) {
+				line += "1"
+			} else {
+				line += "."
+			}
+		}
+		debug(line)
+	}
+
 	return
+}
+
+func contains(coords []coord, coord coord) bool {
+	for _, c := range coords {
+		if c == coord {
+			return true
+		}
+	}
+
+	return false
 }
 
 func getScore(currentState state, move move, myPlayerId int) int {
