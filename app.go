@@ -152,6 +152,8 @@ func findBestMove(currentState state, myPlayerId int) (bestMove move, bestScore 
 
 	possibleMoves := getPossibleMoves(currentState, myPlayerId)
 
+	//debugAny("possible moves", possibleMoves)
+
 	for _, move := range possibleMoves {
 		score := getScore(currentState, move, myPlayerId)
 		if score > bestScore {
@@ -183,7 +185,11 @@ func getPossibleMoves(currentState state, myPlayerId int) (possibleMoves []move)
 		if !isTileOccupied(currentState, adjacentTile) && !isTileRemoved(currentState, adjacentTile) {
 			nextState := applyMove(currentState, adjacentTile, myPlayerId)
 
+			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
+
 			possibleRemoves := getPossibleRemoves(nextState, myPlayerId)
+
+			//debugAny(fmt.Sprintf("possible removes for %v", adjacentTile), possibleRemoves)
 
 			for _, possibleRemove := range possibleRemoves {
 				possibleMoves = append(possibleMoves, move{adjacentTile, possibleRemove})
@@ -209,15 +215,12 @@ func getPossibleMoves(currentState state, myPlayerId int) (possibleMoves []move)
 
 func getPossibleRemoves(currentState state, myPlayerId int) (possibleRemoves []coord) {
 	// a player can remove any tile that is not occupied by a pawn and not already removed
-	// it's better to only remove tiles that are adjacent to the opponent's pawn
 
-	opponentPosition := currentState.playersPosition[1-myPlayerId]
-
-	adjacentTiles := getAdjacentTiles(opponentPosition)
-
-	for _, adjacentTile := range adjacentTiles {
-		if !isTileOccupied(currentState, adjacentTile) && !isTileRemoved(currentState, adjacentTile) {
-			possibleRemoves = append(possibleRemoves, adjacentTile)
+	for y := 0; y < HEIGHT; y++ {
+		for x := 0; x < WIDTH; x++ {
+			if !isTileOccupied(currentState, coord{x, y}) && !isTileRemoved(currentState, coord{x, y}) {
+				possibleRemoves = append(possibleRemoves, coord{x, y})
+			}
 		}
 	}
 
