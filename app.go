@@ -58,6 +58,8 @@ Response time first turn is ≤ 1000 ms.
 Response time per turn is ≤ 100 ms.
  **/
 
+const LOCAL = true
+
 // constant values
 const WIDTH = 9
 const HEIGHT = 9
@@ -86,6 +88,27 @@ func debugAny(message string, any interface{}) {
 }
 
 func main() {
+	if LOCAL {
+		mainLocal()
+	} else {
+		mainCG()
+	}
+}
+
+func mainLocal() {
+	state := state{
+		playersPosition: [2]coord{{0, 4}, {8, 4}},
+		boardRemoved:    [HEIGHT][WIDTH]bool{},
+	}
+
+	bestMove, bestScore := findBestMove(state, 0)
+
+	debugAny("best move", bestMove)
+	debugAny("best score", bestScore)
+
+}
+
+func mainCG() {
 	var playerPositionX int
 	fmt.Scan(&playerPositionX)
 
@@ -154,12 +177,12 @@ func findBestMove(currentState state, myPlayerId int) (bestAction action, bestSc
 
 	//debugAny("possible moves", possibleActions)
 
-	for _, action := range possibleActions {
-		//debugAny(fmt.Sprintf("testing action %d", iMove), action)
+	for iAction, action := range possibleActions {
+		debugAny(fmt.Sprintf("testing action %d/%d", iAction, len(possibleActions)), action)
 
 		nextState := applyAction(currentState, action, myPlayerId)
 
-		score := alphaBeta(nextState, 0, -1000000, 1000000, myPlayerId, 1-myPlayerId)
+		score := alphaBeta(nextState, 1, -1000000, 1000000, myPlayerId, 1-myPlayerId)
 		if score > bestScore {
 			bestScore = score
 			bestAction = action
@@ -342,7 +365,7 @@ func getPartition(currentState state) (partition [][]int) {
 	}
 
 	//log the grid of the partition
-	debug("partition")
+	//debug("partition")
 
 	for y := 0; y < HEIGHT; y++ {
 		line := ""
@@ -361,7 +384,7 @@ func getPartition(currentState state) (partition [][]int) {
 				line += strconv.Itoa(partition[y][x])
 			}
 		}
-		debug(line)
+		//debug(line)
 	}
 
 	return
