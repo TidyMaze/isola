@@ -99,6 +99,7 @@ func main() {
 
 func mainLocal() {
 	// start profiling
+
 	go func() {
 		fmt.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
@@ -277,6 +278,8 @@ func getPossibleRemoves(currentState state) (possibleRemoves []coord) {
 }
 
 func getAdjacentTiles(position coord) (adjacentTiles []coord) {
+	adjacentTiles = make([]coord, 0, 8)
+
 	coords := []coord{
 		{position.x - 1, position.y - 1},
 		{position.x - 1, position.y},
