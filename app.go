@@ -70,7 +70,7 @@ type state struct {
 	boardRemoved    [HEIGHT][WIDTH]bool
 }
 
-type move struct {
+type action struct {
 	movePosition coord
 	removeTile   coord
 }
@@ -133,36 +133,36 @@ func main() {
 
 		debugAny("current state", currentState)
 
-		bestMove, bestScore := findBestMove(currentState, myPlayerId)
+		bestAction, bestScore := findBestMove(currentState, myPlayerId)
 
-		debugAny("best move", bestMove)
+		debugAny("best action", bestAction)
 		debugAny("best score", bestScore)
 
-		currentState = applyMove(currentState, bestMove, myPlayerId)
+		currentState = applyAction(currentState, bestAction, myPlayerId)
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
-		fmt.Println(fmt.Sprintf("%d %d %d %d", bestMove.movePosition.x, bestMove.movePosition.y, bestMove.removeTile.x, bestMove.removeTile.y)) // action: "x y" to move or "x y message" to move and speak
+		fmt.Println(fmt.Sprintf("%d %d %d %d", bestAction.movePosition.x, bestAction.movePosition.y, bestAction.removeTile.x, bestAction.removeTile.y)) // action: "x y" to action or "x y message" to action and speak
 	}
 }
 
-func findBestMove(currentState state, myPlayerId int) (bestMove move, bestScore int) {
+func findBestMove(currentState state, myPlayerId int) (bestAction action, bestScore int) {
 	bestScore = -1000000
 
-	possibleMoves := getPossibleMoves(currentState, myPlayerId)
+	possibleActions := getPossibleActions(currentState, myPlayerId)
 
-	//debugAny("possible moves", possibleMoves)
+	//debugAny("possible moves", possibleActions)
 
-	for _, move := range possibleMoves {
-		//debugAny(fmt.Sprintf("testing move %d", iMove), move)
+	for _, action := range possibleActions {
+		//debugAny(fmt.Sprintf("testing action %d", iMove), action)
 
-		nextState := applyMove(currentState, move, myPlayerId)
+		nextState := applyAction(currentState, action, myPlayerId)
 
 		score := alphaBeta(nextState, 0, -1000000, 1000000, myPlayerId, 1-myPlayerId)
 		if score > bestScore {
 			bestScore = score
-			bestMove = move
+			bestAction = action
 
-			debugAny("found a better move", bestMove)
+			debugAny("found a better action", bestAction)
 			debugAny("found a better score", bestScore)
 		}
 	}
@@ -170,26 +170,26 @@ func findBestMove(currentState state, myPlayerId int) (bestMove move, bestScore 
 	return
 }
 
-func applyMoveOnly(currentState state, movePosition coord, playerId int) (nextState state) {
+func applyMove(currentState state, movePosition coord, playerId int) (nextState state) {
 	nextState = currentState
 	nextState.playersPosition[playerId] = movePosition
 	return
 }
 
-func applyMove(state state, move move, playerId int) (nextState state) {
-	nextState = applyMoveOnly(state, move.movePosition, playerId)
-	nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
+func applyAction(state state, action action, playerId int) (nextState state) {
+	nextState = applyMove(state, action.movePosition, playerId)
+	nextState.boardRemoved[action.removeTile.y][action.removeTile.x] = true
 	return
 }
 
-func getPossibleMoves(currentState state, playerId int) (possibleMoves []move) {
+func getPossibleActions(currentState state, playerId int) (possibleActions []action) {
 	myPosition := currentState.playersPosition[playerId]
 
 	adjacentTiles := getAdjacentTiles(myPosition)
 
 	for _, adjacentTile := range adjacentTiles {
 		if !isTileOccupied(currentState, adjacentTile) && !isTileRemoved(currentState, adjacentTile) {
-			nextState := applyMoveOnly(currentState, adjacentTile, playerId)
+			nextState := applyMove(currentState, adjacentTile, playerId)
 
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
 
@@ -198,7 +198,7 @@ func getPossibleMoves(currentState state, playerId int) (possibleMoves []move) {
 			//debugAny(fmt.Sprintf("possible removes for %v", adjacentTile), possibleRemoves)
 
 			for _, possibleRemove := range possibleRemoves {
-				possibleMoves = append(possibleMoves, move{adjacentTile, possibleRemove})
+				possibleActions = append(possibleActions, action{adjacentTile, possibleRemove})
 			}
 		}
 	}
@@ -324,21 +324,11 @@ func getPartition(currentState state) (partition [][]int) {
 	return
 }
 
-func contains(coords []coord, coord coord) bool {
-	for _, c := range coords {
-		if c == coord {
-			return true
-		}
-	}
-
-	return false
-}
-
 func getScore(currentState state, myPlayerId int) int {
-	myPossibleMoves := getPossibleMoves(currentState, myPlayerId)
-	opponentPossibleMoves := getPossibleMoves(currentState, 1-myPlayerId)
+	myPossibleActions := getPossibleActions(currentState, myPlayerId)
+	opponentPossibleActions := getPossibleActions(currentState, 1-myPlayerId)
 
-	// a good move is a move that maximize my player closest coords and minimize opponent closest coords
+	// a good action is a action that maximize my player closest coords and minimize opponent closest coords
 	partition := getPartition(currentState)
 
 	myPlayerCellsCount := 0
@@ -355,15 +345,15 @@ func getScore(currentState state, myPlayerId int) int {
 	}
 
 	bonusEnd := 0
-	if len(opponentPossibleMoves) == 0 {
+	if len(opponentPossibleActions) == 0 {
 		bonusEnd += 1000
 	}
 
-	if len(myPossibleMoves) == 0 {
+	if len(myPossibleActions) == 0 {
 		bonusEnd -= 500
 	}
 
-	return bonusEnd + myPlayerCellsCount - opponentCellsCount + len(myPossibleMoves) - len(opponentPossibleMoves)
+	return bonusEnd + myPlayerCellsCount - opponentCellsCount + len(myPossibleActions) - len(opponentPossibleActions)
 }
 
 // a minimax algorithm with alpha-beta pruning and negamax
@@ -374,21 +364,21 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 	}
 
 	// we get all the possible moves
-	possibleMoves := getPossibleMoves(currentState, playerId)
+	possibleActions := getPossibleActions(currentState, playerId)
 
-	// if there is no possible move, the game is over, we return the score of the current state
-	if len(possibleMoves) == 0 {
+	// if there is no possible action, the game is over, we return the score of the current state
+	if len(possibleActions) == 0 {
 		return getScore(currentState, myPlayerId)
 	}
 
 	nodeScore = -1000000
 
-	// for each possible move
-	for _, possibleMove := range possibleMoves {
-		// we get the score of the move by calling alphaBeta recursively
-		nextState := applyMove(currentState, possibleMove, playerId)
+	// for each possible action
+	for _, possibleAction := range possibleActions {
+		// we get the score of the action by calling alphaBeta recursively
+		nextState := applyAction(currentState, possibleAction, playerId)
 
-		// we get the score of the move by calling alphaBeta recursively
+		// we get the score of the action by calling alphaBeta recursively
 		nodeScore = max(nodeScore, -alphaBeta(nextState, depth-1, -beta, -alpha, myPlayerId, 1-playerId))
 
 		if nodeScore >= beta {
