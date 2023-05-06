@@ -147,7 +147,7 @@ func main() {
 }
 
 func findBestMove(currentState state, myPlayerId int) (bestMove move, bestScore int) {
-	bestScore = -1000
+	bestScore = -10000
 
 	possibleMoves := getPossibleMoves(currentState, myPlayerId)
 
