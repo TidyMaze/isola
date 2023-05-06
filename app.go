@@ -332,15 +332,12 @@ func contains(coords []coord, coord coord) bool {
 	return false
 }
 
-func getScore(currentState state, move move, myPlayerId int) int {
-	nextState := applyMove(currentState, move.movePosition, myPlayerId)
-	nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
-
-	myPossibleMoves := getPossibleMoves(nextState, myPlayerId)
-	opponentPossibleMoves := getPossibleMoves(nextState, 1-myPlayerId)
+func getScore(currentState state, myPlayerId int) int {
+	myPossibleMoves := getPossibleMoves(currentState, myPlayerId)
+	opponentPossibleMoves := getPossibleMoves(currentState, 1-myPlayerId)
 
 	// a good move is a move that maximize my player closest coords and minimize opponent closest coords
-	partition := getPartition(nextState)
+	partition := getPartition(currentState)
 
 	myPlayerCellsCount := 0
 	opponentCellsCount := 0
@@ -371,7 +368,7 @@ func getScore(currentState state, move move, myPlayerId int) int {
 func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId int, playerId int) (nodeScore int) {
 	if depth == 0 {
 		// we reached the end of the tree, we return the score of the current state
-		return getScore(currentState, move{}, myPlayerId)
+		return getScore(currentState, myPlayerId)
 	}
 
 	// we get all the possible moves
@@ -379,7 +376,7 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 
 	// if there is no possible move, the game is over, we return the score of the current state
 	if len(possibleMoves) == 0 {
-		return getScore(currentState, move{}, myPlayerId)
+		return getScore(currentState, myPlayerId)
 	}
 
 	nodeScore = -1000000
