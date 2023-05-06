@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 )
 
 /**
@@ -314,24 +315,24 @@ func getPartition(currentState state) (partition [][]int) {
 		}
 	}
 
-	// log the grid of the partition
-	//debug("partition")
-	//
-	//for y := 0; y < HEIGHT; y++ {
-	//	line := ""
-	//	for x := 0; x < WIDTH; x++ {
-	//		// for each cell, padding of 2 characters
-	//
-	//		if currentState.boardRemoved[y][x] {
-	//			line += "X"
-	//		} else if partition[y][x] == -1 {
-	//			line += "."
-	//		} else {
-	//			line += strconv.Itoa(partition[y][x])
-	//		}
-	//	}
-	//	debug(line)
-	//}
+	//log the grid of the partition
+	debug("partition")
+
+	for y := 0; y < HEIGHT; y++ {
+		line := ""
+		for x := 0; x < WIDTH; x++ {
+			// for each cell, padding of 2 characters
+
+			if currentState.boardRemoved[y][x] {
+				line += "X"
+			} else if partition[y][x] == -1 {
+				line += "."
+			} else {
+				line += strconv.Itoa(partition[y][x])
+			}
+		}
+		debug(line)
+	}
 
 	return
 }
