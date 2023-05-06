@@ -361,3 +361,47 @@ func getScore(currentState state, move move, myPlayerId int) int {
 
 	return bonusEnd + myPlayerCellsCount - opponentCellsCount + len(myPossibleMoves) - len(opponentPossibleMoves)
 }
+
+// a minimax algorithm with alpha-beta pruning and negamax
+func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId int) (nodeScore int) {
+	if depth == 0 {
+		// we reached the end of the tree, we return the score of the current state
+		return getScore(currentState, move{}, myPlayerId)
+	}
+
+	// we get all the possible moves
+	possibleMoves := getPossibleMoves(currentState, myPlayerId)
+
+	// if there is no possible move, the game is over, we return the score of the current state
+	if len(possibleMoves) == 0 {
+		return getScore(currentState, move{}, myPlayerId)
+	}
+
+	nodeScore = -1000000
+
+	// for each possible move
+	for _, possibleMove := range possibleMoves {
+		// we get the score of the move by calling alphaBeta recursively
+		nextState := applyMove(currentState, possibleMove.movePosition, myPlayerId)
+		nextState.boardRemoved[possibleMove.removeTile.y][possibleMove.removeTile.x] = true
+
+		// we get the score of the move by calling alphaBeta recursively
+		nodeScore = max(nodeScore, -alphaBeta(nextState, depth-1, -beta, -alpha, 1-myPlayerId))
+
+		if nodeScore >= beta {
+			return nodeScore
+		}
+
+		alpha = max(alpha, nodeScore)
+	}
+
+	return alpha
+}
+
+func max(a int, b int) int {
+	if a > b {
+		return a
+	}
+
+	return b
+}
