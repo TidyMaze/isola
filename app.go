@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 	"math"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
+	"runtime/pprof"
+	_ "runtime/pprof"
 	"strconv"
 )
 
@@ -100,9 +100,17 @@ func main() {
 func mainLocal() {
 	// start profiling
 
-	go func() {
-		fmt.Println(http.ListenAndServe("localhost:6060", nil))
-	}()
+	f, err := os.Create("cpu.prof")
+	if err != nil {
+		panic(err)
+	}
+
+	err = pprof.StartCPUProfile(f)
+	if err != nil {
+		panic(err)
+	}
+
+	defer pprof.StopCPUProfile()
 
 	state := state{
 		playersPosition: [2]coord{{0, 4}, {8, 4}},
