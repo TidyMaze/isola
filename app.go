@@ -304,9 +304,9 @@ func getAdjacentTiles(position coord) (adjacentTiles []coord) {
 		{position.x + 1, position.y + 1},
 	}
 
-	for _, coord := range coords {
-		if coord.x >= 0 && coord.x < WIDTH && coord.y >= 0 && coord.y < HEIGHT {
-			adjacentTiles = append(adjacentTiles, coord)
+	for iCoord := 0; iCoord < len(coords); iCoord++ {
+		if coords[iCoord].x >= 0 && coords[iCoord].x < WIDTH && coords[iCoord].y >= 0 && coords[iCoord].y < HEIGHT {
+			adjacentTiles = append(adjacentTiles, coords[iCoord])
 		}
 	}
 
