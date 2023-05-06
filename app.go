@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 )
 
@@ -195,6 +196,13 @@ func getPossibleActions(currentState state, playerId int) (possibleActions []act
 
 			possibleRemoves := getPossibleRemoves(nextState)
 
+			//// sort possible removes by distance to opponent
+			//oppoPosition := nextState.playersPosition[1-playerId]
+			//
+			//sort.Slice(possibleRemoves, func(i, j int) bool {
+			//	return distance(possibleRemoves[i], oppoPosition) < distance(possibleRemoves[j], oppoPosition)
+			//})
+
 			//debugAny(fmt.Sprintf("possible removes for %v", adjacentTile), possibleRemoves)
 
 			for _, possibleRemove := range possibleRemoves {
@@ -204,6 +212,10 @@ func getPossibleActions(currentState state, playerId int) (possibleActions []act
 	}
 
 	return
+}
+
+func distance(coord1 coord, coord2 coord) int {
+	return int(math.Abs(float64(coord1.x-coord2.x)) + math.Abs(float64(coord1.y-coord2.y)))
 }
 
 //func getPossibleRemoves(currentState state, myPlayerId int) (possibleRemoves []coord) {
