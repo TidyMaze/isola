@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"math"
+	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strconv"
 )
@@ -96,6 +98,11 @@ func main() {
 }
 
 func mainLocal() {
+	// start profiling
+	go func() {
+		fmt.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	state := state{
 		playersPosition: [2]coord{{0, 4}, {8, 4}},
 		boardRemoved:    [HEIGHT][WIDTH]bool{},
@@ -182,7 +189,7 @@ func findBestMove(currentState state, myPlayerId int) (bestAction action, bestSc
 
 		nextState := applyAction(currentState, action, myPlayerId)
 
-		score := alphaBeta(nextState, 1, -1000000, 1000000, myPlayerId, 1-myPlayerId)
+		score := alphaBeta(nextState, 2, -1000000, 1000000, myPlayerId, 1-myPlayerId)
 		if score > bestScore {
 			bestScore = score
 			bestAction = action
