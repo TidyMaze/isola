@@ -138,8 +138,7 @@ func main() {
 		debugAny("best move", bestMove)
 		debugAny("best score", bestScore)
 
-		currentState = applyMove(currentState, bestMove.movePosition, myPlayerId)
-		currentState.boardRemoved[bestMove.removeTile.y][bestMove.removeTile.x] = true
+		currentState = applyMove(currentState, bestMove, myPlayerId)
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
 		fmt.Println(fmt.Sprintf("%d %d %d %d", bestMove.movePosition.x, bestMove.movePosition.y, bestMove.removeTile.x, bestMove.removeTile.y)) // action: "x y" to move or "x y message" to move and speak
@@ -156,8 +155,7 @@ func findBestMove(currentState state, myPlayerId int) (bestMove move, bestScore 
 	for _, move := range possibleMoves {
 		//debugAny(fmt.Sprintf("testing move %d", iMove), move)
 
-		nextState := applyMove(currentState, move.movePosition, myPlayerId)
-		nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
+		nextState := applyMove(currentState, move, myPlayerId)
 
 		score := alphaBeta(nextState, 0, -1000000, 1000000, myPlayerId, 1-myPlayerId)
 		if score > bestScore {
@@ -172,11 +170,15 @@ func findBestMove(currentState state, myPlayerId int) (bestMove move, bestScore 
 	return
 }
 
-func applyMove(currentState state, movePosition coord, myPlayerId int) (nextState state) {
+func applyMoveOnly(currentState state, movePosition coord, playerId int) (nextState state) {
 	nextState = currentState
+	nextState.playersPosition[playerId] = movePosition
+	return
+}
 
-	nextState.playersPosition[myPlayerId] = movePosition
-
+func applyMove(state state, move move, playerId int) (nextState state) {
+	nextState = applyMoveOnly(state, move.movePosition, playerId)
+	nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
 	return
 }
 
@@ -187,7 +189,7 @@ func getPossibleMoves(currentState state, myPlayerId int) (possibleMoves []move)
 
 	for _, adjacentTile := range adjacentTiles {
 		if !isTileOccupied(currentState, adjacentTile) && !isTileRemoved(currentState, adjacentTile) {
-			nextState := applyMove(currentState, adjacentTile, myPlayerId)
+			nextState := applyMoveOnly(currentState, adjacentTile, myPlayerId)
 
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
 
@@ -384,8 +386,7 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 	// for each possible move
 	for _, possibleMove := range possibleMoves {
 		// we get the score of the move by calling alphaBeta recursively
-		nextState := applyMove(currentState, possibleMove.movePosition, playerId)
-		nextState.boardRemoved[possibleMove.removeTile.y][possibleMove.removeTile.x] = true
+		nextState := applyMove(currentState, possibleMove, playerId)
 
 		// we get the score of the move by calling alphaBeta recursively
 		nodeScore = max(nodeScore, -alphaBeta(nextState, depth-1, -beta, -alpha, myPlayerId, 1-playerId))
