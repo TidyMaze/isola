@@ -322,13 +322,7 @@ func getAdjacentTiles(position coord) (adjacentTiles []coord) {
 }
 
 func isTileOccupied(currentState state, position coord) bool {
-	for _, playerPosition := range currentState.playersPosition {
-		if playerPosition == position {
-			return true
-		}
-	}
-
-	return false
+	return currentState.playersPosition[0] == position || currentState.playersPosition[1] == position
 }
 
 func isTileRemoved(currentState state, position coord) bool {
