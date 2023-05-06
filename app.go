@@ -147,14 +147,19 @@ func main() {
 }
 
 func findBestMove(currentState state, myPlayerId int) (bestMove move, bestScore int) {
-	bestScore = -10000
+	bestScore = -1000000
 
 	possibleMoves := getPossibleMoves(currentState, myPlayerId)
 
 	//debugAny("possible moves", possibleMoves)
 
 	for _, move := range possibleMoves {
-		score := getScore(currentState, move, myPlayerId)
+		//debugAny(fmt.Sprintf("testing move %d", iMove), move)
+
+		nextState := applyMove(currentState, move.movePosition, myPlayerId)
+		nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
+
+		score := alphaBeta(nextState, 1, -1000000, 1000000, 1-myPlayerId)
 		if score > bestScore {
 			bestScore = score
 			bestMove = move
