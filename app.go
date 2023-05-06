@@ -245,7 +245,18 @@ func getPossibleActions(currentState state, playerId int) []action {
 
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
 
-			getPossibleRemoves(nextState, &possibleRemoves)
+			// empty possible removes
+			possibleRemoves = possibleRemoves[:0]
+
+			// a player can remove any tile that is not occupied by a pawn and not already removed
+			for y := 0; y < HEIGHT; y++ {
+				for x := 0; x < WIDTH; x++ {
+					c := coord{x, y}
+					if !isTileOccupied(nextState, c) && !isTileRemoved(nextState, c) {
+						possibleActionsCache = append(possibleActionsCache, action{adjacentTile, c})
+					}
+				}
+			}
 
 			//// sort possible removes by distance to opponent
 			//oppoPosition := nextState.playersPosition[1-playerId]
@@ -255,10 +266,6 @@ func getPossibleActions(currentState state, playerId int) []action {
 			//})
 
 			//debugAny(fmt.Sprintf("possible removes for %v", adjacentTile), possibleRemoves)
-
-			for _, possibleRemove := range possibleRemoves {
-				possibleActionsCache = append(possibleActionsCache, action{adjacentTile, possibleRemove})
-			}
 		}
 	}
 
@@ -282,21 +289,21 @@ func distance(coord1 coord, coord2 coord) int {
 //	return
 //}
 
-func getPossibleRemoves(currentState state, possibleRemoves *[]coord) {
-
-	// empty possible removes
-	*possibleRemoves = (*possibleRemoves)[:0]
-
-	// a player can remove any tile that is not occupied by a pawn and not already removed
-	for y := 0; y < HEIGHT; y++ {
-		for x := 0; x < WIDTH; x++ {
-			c := coord{x, y}
-			if !isTileOccupied(currentState, c) && !isTileRemoved(currentState, c) {
-				*possibleRemoves = append(*possibleRemoves, c)
-			}
-		}
-	}
-}
+//func getPossibleRemoves(currentState state, possibleRemoves *[]coord) {
+//
+//	// empty possible removes
+//	*possibleRemoves = (*possibleRemoves)[:0]
+//
+//	// a player can remove any tile that is not occupied by a pawn and not already removed
+//	for y := 0; y < HEIGHT; y++ {
+//		for x := 0; x < WIDTH; x++ {
+//			c := coord{x, y}
+//			if !isTileOccupied(currentState, c) && !isTileRemoved(currentState, c) {
+//				*possibleRemoves = append(*possibleRemoves, c)
+//			}
+//		}
+//	}
+//}
 
 func getAdjacentTiles(position coord) (adjacentTiles []coord) {
 	adjacentTiles = make([]coord, 0, 8)
