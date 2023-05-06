@@ -230,8 +230,11 @@ func applyAction(state state, action action, playerId int) (nextState state) {
 }
 
 var possibleRemoves []coord
+var possibleActionsCache []action
 
-func getPossibleActions(currentState state, playerId int) (possibleActions []action) {
+func getPossibleActions(currentState state, playerId int) []action {
+	possibleActionsCache = possibleActionsCache[:0]
+
 	myPosition := currentState.playersPosition[playerId]
 
 	adjacentTiles := getAdjacentTiles(myPosition)
@@ -254,12 +257,12 @@ func getPossibleActions(currentState state, playerId int) (possibleActions []act
 			//debugAny(fmt.Sprintf("possible removes for %v", adjacentTile), possibleRemoves)
 
 			for _, possibleRemove := range possibleRemoves {
-				possibleActions = append(possibleActions, action{adjacentTile, possibleRemove})
+				possibleActionsCache = append(possibleActionsCache, action{adjacentTile, possibleRemove})
 			}
 		}
 	}
 
-	return
+	return possibleActionsCache
 }
 
 func distance(coord1 coord, coord2 coord) int {
