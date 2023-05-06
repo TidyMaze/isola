@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"strconv"
 )
 
 /**
@@ -297,23 +296,23 @@ func getPartition(currentState state) (partition [][]int) {
 	}
 
 	// log the grid of the partition
-	debug("partition")
-
-	for y := 0; y < HEIGHT; y++ {
-		line := ""
-		for x := 0; x < WIDTH; x++ {
-			// for each cell, padding of 2 characters
-
-			if currentState.boardRemoved[y][x] {
-				line += "X"
-			} else if partition[y][x] == -1 {
-				line += "."
-			} else {
-				line += strconv.Itoa(partition[y][x])
-			}
-		}
-		debug(line)
-	}
+	//debug("partition")
+	//
+	//for y := 0; y < HEIGHT; y++ {
+	//	line := ""
+	//	for x := 0; x < WIDTH; x++ {
+	//		// for each cell, padding of 2 characters
+	//
+	//		if currentState.boardRemoved[y][x] {
+	//			line += "X"
+	//		} else if partition[y][x] == -1 {
+	//			line += "."
+	//		} else {
+	//			line += strconv.Itoa(partition[y][x])
+	//		}
+	//	}
+	//	debug(line)
+	//}
 
 	return
 }
@@ -332,6 +331,9 @@ func getScore(currentState state, move move, myPlayerId int) int {
 	nextState := applyMove(currentState, move.movePosition, myPlayerId)
 	nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
 
+	myPossibleMoves := getPossibleMoves(nextState, myPlayerId)
+	opponentPossibleMoves := getPossibleMoves(nextState, 1-myPlayerId)
+
 	// a good move is a move that maximize my player closest coords and minimize opponent closest coords
 	partition := getPartition(nextState)
 
@@ -348,17 +350,14 @@ func getScore(currentState state, move move, myPlayerId int) int {
 		}
 	}
 
-	return myPlayerCellsCount - opponentCellsCount
-}
+	bonusEnd := 0
+	if len(opponentPossibleMoves) == 0 {
+		bonusEnd = 1000
+	}
 
-//func getScore(currentState state, move move, myPlayerId int) int {
-//	// a good move is a move that maximize my player possible moves and minimize the opponent possible moves
-//
-//	nextState := applyMove(currentState, move.movePosition, myPlayerId)
-//	nextState.boardRemoved[move.removeTile.y][move.removeTile.x] = true
-//
-//	myPossibleMoves := getPossibleMoves(nextState, myPlayerId)
-//	opponentPossibleMoves := getPossibleMoves(nextState, 1-myPlayerId)
-//
-//	return len(myPossibleMoves) - len(opponentPossibleMoves)
-//}
+	if len(myPossibleMoves) == 0 {
+		bonusEnd = -500
+	}
+
+	return bonusEnd + myPlayerCellsCount - opponentCellsCount
+}
