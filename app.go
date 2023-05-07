@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math"
-	"net/http"
 	_ "net/http/pprof"
 	"os"
 	"runtime/pprof"
@@ -63,7 +62,7 @@ Response time per turn is ≤ 100 ms.
 
 const LOCAL = true
 
-const DEPTH = 3
+const DEPTH = 2
 
 // constant values
 const WIDTH = 9
@@ -103,22 +102,22 @@ func main() {
 func mainLocal() {
 	// start profiling
 
-	//f, err := os.Create("cpu.prof")
-	//
-	//if err != nil {
-	//	panic(err)
-	//}
-	//
-	//err = pprof.StartCPUProfile(f)
-	//if err != nil {
-	//	panic(err)
-	//}
+	f, err := os.Create("cpu.prof")
+
+	if err != nil {
+		panic(err)
+	}
+
+	err = pprof.StartCPUProfile(f)
+	if err != nil {
+		panic(err)
+	}
 
 	// enable memory profiling
 
-	go func() {
-		http.ListenAndServe(":6060", nil)
-	}()
+	//go func() {
+	//	http.ListenAndServe(":6060", nil)
+	//}()
 
 	// stop after 10 seconds
 	//time.AfterFunc(5*time.Second, func() {
