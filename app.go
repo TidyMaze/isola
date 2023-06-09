@@ -7,7 +7,6 @@ import (
 	"os"
 	"runtime/pprof"
 	_ "runtime/pprof"
-	"strconv"
 )
 
 /**
@@ -412,30 +411,30 @@ func getPartition(currentState state) (partition [][]int) {
 	}
 
 	//log the grid of the partition
-	if LOCAL {
-
-		debug("partition")
-
-		for y := 0; y < HEIGHT; y++ {
-			line := ""
-			for x := 0; x < WIDTH; x++ {
-				// for each cell, padding of 2 characters
-
-				if currentState.playersPosition[0] == (coord{x, y}) {
-					line += "A"
-				} else if currentState.playersPosition[1] == (coord{x, y}) {
-					line += "B"
-				} else if currentState.boardRemoved[y][x] {
-					line += "X"
-				} else if partition[y][x] == -1 {
-					line += "."
-				} else {
-					line += strconv.Itoa(partition[y][x])
-				}
-			}
-			debug(line)
-		}
-	}
+	//if LOCAL {
+	//
+	//	debug("partition")
+	//
+	//	for y := 0; y < HEIGHT; y++ {
+	//		line := ""
+	//		for x := 0; x < WIDTH; x++ {
+	//			// for each cell, padding of 2 characters
+	//
+	//			if currentState.playersPosition[0] == (coord{x, y}) {
+	//				line += "A"
+	//			} else if currentState.playersPosition[1] == (coord{x, y}) {
+	//				line += "B"
+	//			} else if currentState.boardRemoved[y][x] {
+	//				line += "X"
+	//			} else if partition[y][x] == -1 {
+	//				line += "."
+	//			} else {
+	//				line += strconv.Itoa(partition[y][x])
+	//			}
+	//		}
+	//		debug(line)
+	//	}
+	//}
 
 	return
 }
