@@ -507,15 +507,15 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 
 	possibleActions := getPossibleActions(currentState, playerId)
 
-	// sort actions by remove tile distance to opponent
-	opponentPosition := currentState.playersPosition[1-playerId]
-	sort.Slice(possibleActions, func(i, j int) bool {
-		return distance(possibleActions[i].removeTile, opponentPosition) < distance(possibleActions[j].removeTile, opponentPosition)
-	})
-
 	// only keep the best actions
-	MAX_KEEP := 100
+	MAX_KEEP := 20
 	if len(possibleActions) > MAX_KEEP {
+		// sort actions by remove tile distance to opponent
+		opponentPosition := currentState.playersPosition[1-playerId]
+		sort.Slice(possibleActions, func(i, j int) bool {
+			return distance(possibleActions[i].removeTile, opponentPosition) < distance(possibleActions[j].removeTile, opponentPosition)
+		})
+
 		//debug(fmt.Sprintf("keeping only the N best actions (instead of %d)", len(possibleActions)))
 		possibleActions = possibleActions[:MAX_KEEP]
 	}
