@@ -241,8 +241,6 @@ func applyAction(state state, action action, playerId int) (nextState state) {
 	return
 }
 
-var possibleRemoves []coord
-
 func getPossibleActions(currentState state, playerId int) []action {
 	actions := make([]action, 0, 8*WIDTH*HEIGHT)
 
@@ -255,9 +253,6 @@ func getPossibleActions(currentState state, playerId int) []action {
 			nextState := applyMove(currentState, adjacentTile, playerId)
 
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
-
-			// empty possible removes
-			possibleRemoves = possibleRemoves[:0]
 
 			// a player can remove any tile that is not occupied by a pawn and not already removed
 			for y := 0; y < HEIGHT; y++ {
