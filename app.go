@@ -334,7 +334,7 @@ var cacheAdjacentTiles = make(map[int][]coord)
 
 func getAdjacentTiles(position coord) (adjacentTiles []coord) {
 
-	adjacentTiles, ok := cacheAdjacentTiles[position.x*WIDTH+position.y]
+	adjacentTiles, ok := cacheAdjacentTiles[position.y*WIDTH+position.x]
 	if ok {
 		return
 	}
@@ -358,7 +358,7 @@ func getAdjacentTiles(position coord) (adjacentTiles []coord) {
 		}
 	}
 
-	cacheAdjacentTiles[position.x*WIDTH+position.y] = adjacentTiles
+	cacheAdjacentTiles[position.y*WIDTH+position.x] = adjacentTiles
 
 	return
 }
