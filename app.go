@@ -269,6 +269,34 @@ func getPossibleActions(currentState state, playerId int) []action {
 	return actions
 }
 
+func getPossibleActionsCount(currentState state, playerId int) int {
+	count := 0
+
+	myPosition := currentState.playersPosition[playerId]
+
+	adjacentTiles := getAdjacentTiles(myPosition)
+
+	for _, adjacentTile := range adjacentTiles {
+		if !isTileOccupied(&currentState, &adjacentTile) && !isTileRemoved(&currentState, &adjacentTile) {
+			nextState := applyMove(currentState, adjacentTile, playerId)
+
+			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
+
+			// a player can remove any tile that is not occupied by a pawn and not already removed
+			for y := 0; y < HEIGHT; y++ {
+				for x := 0; x < WIDTH; x++ {
+					c := coord{x, y}
+					if !isTileOccupied(&nextState, &c) && !isTileRemoved(&nextState, &c) {
+						count++
+					}
+				}
+			}
+		}
+	}
+
+	return count
+}
+
 func distance(coord1 coord, coord2 coord) int {
 	return int(math.Abs(float64(coord1.x-coord2.x)) + math.Abs(float64(coord1.y-coord2.y)))
 }
@@ -426,8 +454,8 @@ func getPartition(currentState state) (partition [][]int) {
 }
 
 func getScore(currentState state, myPlayerId int) int {
-	myPossibleActions := getPossibleActions(currentState, myPlayerId)
-	opponentPossibleActions := getPossibleActions(currentState, 1-myPlayerId)
+	myPossibleActions := getPossibleActionsCount(currentState, myPlayerId)
+	opponentPossibleActions := getPossibleActionsCount(currentState, 1-myPlayerId)
 
 	// a good action is a action that maximize my player closest coords and minimize opponent closest coords
 	partition := getPartition(currentState)
@@ -446,15 +474,15 @@ func getScore(currentState state, myPlayerId int) int {
 	}
 
 	bonusEnd := 0
-	if len(opponentPossibleActions) == 0 {
+	if opponentPossibleActions == 0 {
 		bonusEnd += 1000
 	}
 
-	if len(myPossibleActions) == 0 {
+	if myPossibleActions == 0 {
 		bonusEnd -= 500
 	}
 
-	return bonusEnd + myPlayerCellsCount - opponentCellsCount + len(myPossibleActions) - len(opponentPossibleActions)
+	return bonusEnd + myPlayerCellsCount - opponentCellsCount + myPossibleActions - opponentPossibleActions
 }
 
 func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId int, playerId int) (nodeScore int) {
