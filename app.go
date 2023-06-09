@@ -534,7 +534,9 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 	}
 
 	if depth == 0 {
-		return color * getScore(currentState, myPlayerId)
+		res := color * getScore(currentState, myPlayerId)
+		stateScoreCache[hashedState] = res
+		return res
 	}
 
 	possibleActions := getPossibleActions(currentState, playerId)
@@ -553,7 +555,9 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 	}
 
 	if len(possibleActions) == 0 {
-		return getScore(currentState, myPlayerId)
+		res := color * getScore(currentState, myPlayerId)
+		stateScoreCache[hashedState] = res
+		return res
 	}
 
 	nodeScore = -1000000
@@ -563,6 +567,7 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 		nodeScore = max(nodeScore, -alphaBeta(nextState, depth-1, -beta, -alpha, myPlayerId, 1-playerId))
 
 		if nodeScore >= beta {
+			stateScoreCache[hashedState] = nodeScore
 			return nodeScore
 		}
 
@@ -570,7 +575,6 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 	}
 
 	stateScoreCache[hashedState] = nodeScore
-
 	return nodeScore
 }
 
