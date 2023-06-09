@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime/pprof"
 	_ "runtime/pprof"
+	"sort"
 )
 
 /**
@@ -263,16 +264,19 @@ func getPossibleActions(currentState state, playerId int) []action {
 					}
 				}
 			}
-
-			//// sort possible removes by distance to opponent
-			//oppoPosition := nextState.playersPosition[1-playerId]
-			//
-			//sort.Slice(possibleRemoves, func(i, j int) bool {
-			//	return distance(possibleRemoves[i], oppoPosition) < distance(possibleRemoves[j], oppoPosition)
-			//})
-
-			//debugAny(fmt.Sprintf("possible removes for %v", adjacentTile), possibleRemoves)
 		}
+	}
+
+	// sort actions by remove tile distance to opponent
+	opponentPosition := currentState.playersPosition[1-playerId]
+	sort.Slice(actions, func(i, j int) bool {
+		return distance(actions[i].removeTile, opponentPosition) < distance(actions[j].removeTile, opponentPosition)
+	})
+
+	// only keep the best actions
+	if len(actions) > 100 {
+		//debug(fmt.Sprintf("keeping only the 100 best actions (instead of %d)", len(actions)))
+		actions = actions[:50]
 	}
 
 	return actions
