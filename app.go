@@ -62,7 +62,7 @@ Response time per turn is ≤ 100 ms.
 
 const LOCAL = true
 
-const DEPTH = 2
+const MAX_DEPTH = 2
 
 // constant values
 const WIDTH = 9
@@ -93,6 +93,7 @@ func debugAny(message string, any interface{}) {
 
 func main() {
 	if LOCAL {
+		println("local mode")
 		mainLocal()
 	} else {
 		mainCG()
@@ -214,7 +215,7 @@ func findBestMove(currentState state, myPlayerId int) (bestAction action, bestSc
 
 		nextState := applyAction(currentState, action, myPlayerId)
 
-		score := alphaBeta(nextState, DEPTH, -1000000, 1000000, myPlayerId, 1-myPlayerId)
+		score := alphaBeta(nextState, MAX_DEPTH, -1000000, 1000000, myPlayerId, 1-myPlayerId)
 		if score > bestScore {
 			bestScore = score
 			bestAction = action
@@ -240,7 +241,7 @@ func applyAction(state state, action action, playerId int) (nextState state) {
 }
 
 var possibleRemoves []coord
-var possibleActionsCache []action
+var possibleActionsCache = make([]action, 0, 8*WIDTH*HEIGHT)
 
 func getPossibleActions(currentState state, playerId int) []action {
 	possibleActionsCache = possibleActionsCache[:0]
@@ -472,29 +473,21 @@ func getScore(currentState state, myPlayerId int) int {
 	return bonusEnd + myPlayerCellsCount - opponentCellsCount + len(myPossibleActions) - len(opponentPossibleActions)
 }
 
-// a minimax algorithm with alpha-beta pruning and negamax
 func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId int, playerId int) (nodeScore int) {
 	if depth == 0 {
-		// we reached the end of the tree, we return the score of the current state
 		return getScore(currentState, myPlayerId)
 	}
 
-	// we get all the possible moves
 	possibleActions := getPossibleActions(currentState, playerId)
 
-	// if there is no possible action, the game is over, we return the score of the current state
 	if len(possibleActions) == 0 {
 		return getScore(currentState, myPlayerId)
 	}
 
 	nodeScore = -1000000
 
-	// for each possible action
 	for _, possibleAction := range possibleActions {
-		// we get the score of the action by calling alphaBeta recursively
 		nextState := applyAction(currentState, possibleAction, playerId)
-
-		// we get the score of the action by calling alphaBeta recursively
 		nodeScore = max(nodeScore, -alphaBeta(nextState, depth-1, -beta, -alpha, myPlayerId, 1-playerId))
 
 		if nodeScore >= beta {
