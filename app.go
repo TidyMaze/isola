@@ -5,7 +5,6 @@ import (
 	"math"
 	_ "net/http/pprof"
 	"os"
-	"runtime/pprof"
 	_ "runtime/pprof"
 	"sort"
 )
@@ -105,16 +104,16 @@ func main() {
 func mainLocal() {
 	// start profiling
 
-	f, err := os.Create("cpu.prof")
-
-	if err != nil {
-		panic(err)
-	}
-
-	err = pprof.StartCPUProfile(f)
-	if err != nil {
-		panic(err)
-	}
+	//f, err := os.Create("cpu.prof")
+	//
+	//if err != nil {
+	//	panic(err)
+	//}
+	//
+	//err = pprof.StartCPUProfile(f)
+	//if err != nil {
+	//	panic(err)
+	//}
 
 	// enable memory profiling
 
@@ -129,7 +128,7 @@ func mainLocal() {
 	//	f.Close()
 	//})
 
-	defer pprof.StopCPUProfile()
+	//defer pprof.StopCPUProfile()
 
 	state := state{
 		playersPosition: [2]coord{{0, 4}, {8, 4}},
