@@ -404,11 +404,11 @@ func getPartition(currentState state) (partition [][]int) {
 			// for each adjacent tile, if it is not occupied and not already visited, add it to the queue
 			adjacentTiles := getAdjacentTiles(currentPosition)
 			for iAdjacentTile := 0; iAdjacentTile < len(adjacentTiles); iAdjacentTile++ {
-				adj := adjacentTiles[iAdjacentTile]
+				adj := &adjacentTiles[iAdjacentTile]
 
-				if !isTileOccupied(&currentState, &adj) && !isTileRemoved(&currentState, &adj) && distanceFromPlayer[playerId][adj.y*WIDTH+adj.x] == -1 {
+				if !isTileOccupied(&currentState, adj) && !isTileRemoved(&currentState, adj) && distanceFromPlayer[playerId][adj.y*WIDTH+adj.x] == -1 {
 					distanceFromPlayer[playerId][adj.y*WIDTH+adj.x] = distanceFromPlayer[playerId][currentPosition.y*WIDTH+currentPosition.x] + 1
-					queue = append(queue, adj)
+					queue = append(queue, *adj)
 				}
 			}
 		}
