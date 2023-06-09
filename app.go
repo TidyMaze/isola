@@ -330,7 +330,15 @@ func distance(coord1 coord, coord2 coord) int {
 //	}
 //}
 
+var cacheAdjacentTiles = make(map[coord][]coord)
+
 func getAdjacentTiles(position coord) (adjacentTiles []coord) {
+
+	adjacentTiles, ok := cacheAdjacentTiles[position]
+	if ok {
+		return
+	}
+
 	adjacentTiles = make([]coord, 0, 8)
 
 	coords := []coord{
@@ -349,6 +357,8 @@ func getAdjacentTiles(position coord) (adjacentTiles []coord) {
 			adjacentTiles = append(adjacentTiles, coords[iCoord])
 		}
 	}
+
+	cacheAdjacentTiles[position] = adjacentTiles
 
 	return
 }
