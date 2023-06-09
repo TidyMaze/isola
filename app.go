@@ -459,8 +459,13 @@ func getScore(currentState state, myPlayerId int) int {
 }
 
 func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId int, playerId int) (nodeScore int) {
+	color := 1
+	if playerId != myPlayerId {
+		color = -1
+	}
+
 	if depth == 0 {
-		return getScore(currentState, myPlayerId)
+		return color * getScore(currentState, myPlayerId)
 	}
 
 	possibleActions := getPossibleActions(currentState, playerId)
@@ -472,7 +477,7 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 	})
 
 	// only keep the best actions
-	MAX_KEEP := 3
+	MAX_KEEP := 8
 	if len(possibleActions) > MAX_KEEP {
 		//debug(fmt.Sprintf("keeping only the N best actions (instead of %d)", len(actions)))
 		possibleActions = possibleActions[:MAX_KEEP]
