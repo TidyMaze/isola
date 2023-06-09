@@ -241,10 +241,9 @@ func applyAction(state state, action action, playerId int) (nextState state) {
 }
 
 var possibleRemoves []coord
-var possibleActionsCache = make([]action, 0, 8*WIDTH*HEIGHT)
 
 func getPossibleActions(currentState state, playerId int) []action {
-	possibleActionsCache = possibleActionsCache[:0]
+	actions := make([]action, 0, 8*WIDTH*HEIGHT)
 
 	myPosition := currentState.playersPosition[playerId]
 
@@ -264,7 +263,7 @@ func getPossibleActions(currentState state, playerId int) []action {
 				for x := 0; x < WIDTH; x++ {
 					c := coord{x, y}
 					if !isTileOccupied(&nextState, &c) && !isTileRemoved(&nextState, &c) {
-						possibleActionsCache = append(possibleActionsCache, action{adjacentTile, c})
+						actions = append(actions, action{adjacentTile, c})
 					}
 				}
 			}
@@ -280,7 +279,7 @@ func getPossibleActions(currentState state, playerId int) []action {
 		}
 	}
 
-	return possibleActionsCache
+	return actions
 }
 
 func distance(coord1 coord, coord2 coord) int {
