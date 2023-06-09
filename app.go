@@ -472,7 +472,7 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 	})
 
 	// only keep the best actions
-	MAX_KEEP := 5
+	MAX_KEEP := 3
 	if len(possibleActions) > MAX_KEEP {
 		//debug(fmt.Sprintf("keeping only the N best actions (instead of %d)", len(actions)))
 		possibleActions = possibleActions[:MAX_KEEP]
