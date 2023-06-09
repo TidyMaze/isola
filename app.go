@@ -7,6 +7,7 @@ import (
 	"os"
 	"runtime/pprof"
 	_ "runtime/pprof"
+	"strconv"
 )
 
 /**
@@ -60,7 +61,7 @@ Response time first turn is ≤ 1000 ms.
 Response time per turn is ≤ 100 ms.
  **/
 
-const LOCAL = true
+var LOCAL = os.Getenv("LOCAL") == "true"
 
 const MAX_DEPTH = 2
 
@@ -96,6 +97,7 @@ func main() {
 		println("local mode")
 		mainLocal()
 	} else {
+		debug("cg mode")
 		mainCG()
 	}
 }
@@ -410,27 +412,30 @@ func getPartition(currentState state) (partition [][]int) {
 	}
 
 	//log the grid of the partition
-	//debug("partition")
+	if LOCAL {
 
-	//for y := 0; y < HEIGHT; y++ {
-	//	line := ""
-	//	for x := 0; x < WIDTH; x++ {
-	//		// for each cell, padding of 2 characters
-	//
-	//		if currentState.playersPosition[0] == (coord{x, y}) {
-	//			line += "A"
-	//		} else if currentState.playersPosition[1] == (coord{x, y}) {
-	//			line += "B"
-	//		} else if currentState.boardRemoved[y][x] {
-	//			line += "X"
-	//		} else if partition[y][x] == -1 {
-	//			line += "."
-	//		} else {
-	//			line += strconv.Itoa(partition[y][x])
-	//		}
-	//	}
-	//	debug(line)
-	//}
+		debug("partition")
+
+		for y := 0; y < HEIGHT; y++ {
+			line := ""
+			for x := 0; x < WIDTH; x++ {
+				// for each cell, padding of 2 characters
+
+				if currentState.playersPosition[0] == (coord{x, y}) {
+					line += "A"
+				} else if currentState.playersPosition[1] == (coord{x, y}) {
+					line += "B"
+				} else if currentState.boardRemoved[y][x] {
+					line += "X"
+				} else if partition[y][x] == -1 {
+					line += "."
+				} else {
+					line += strconv.Itoa(partition[y][x])
+				}
+			}
+			debug(line)
+		}
+	}
 
 	return
 }
