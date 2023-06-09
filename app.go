@@ -217,7 +217,7 @@ func findBestMove(currentState state, myPlayerId int) (bestAction action, bestSc
 
 		nextState := applyAction(currentState, action, myPlayerId)
 
-		score := alphaBeta(nextState, MAX_DEPTH, -1000000, 1000000, myPlayerId, 1-myPlayerId)
+		score := -alphaBeta(nextState, MAX_DEPTH, 1000000, -1000000, myPlayerId, 1-myPlayerId)
 		if score > bestScore {
 			bestScore = score
 			bestAction = action
