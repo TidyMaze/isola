@@ -7,6 +7,7 @@ import (
 	"os"
 	_ "runtime/pprof"
 	"sort"
+	"strconv"
 )
 
 /**
@@ -495,7 +496,37 @@ func getScore(currentState state, myPlayerId int) int {
 	return bonusEnd + myPlayerCellsCount - opponentCellsCount + myPossibleActions - opponentPossibleActions
 }
 
+var stateScoreCache = make(map[string]int)
+
+func hashState(currentState state) string {
+	hash := ""
+
+	for y := 0; y < HEIGHT; y++ {
+		for x := 0; x < WIDTH; x++ {
+			if currentState.boardRemoved[y][x] {
+				hash += "X"
+			} else {
+				hash += "."
+			}
+		}
+	}
+
+	hash += strconv.Itoa(currentState.playersPosition[0].x)
+	hash += strconv.Itoa(currentState.playersPosition[0].y)
+	hash += strconv.Itoa(currentState.playersPosition[1].x)
+	hash += strconv.Itoa(currentState.playersPosition[1].y)
+
+	return hash
+}
+
 func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId int, playerId int) (nodeScore int) {
+	//hashedState := hashState(currentState)
+	//
+	//if score, ok := stateScoreCache[hashedState]; ok {
+	//	debug("cache hit for state " + hashedState)
+	//	return score
+	//}
+
 	color := 1
 	if playerId != myPlayerId {
 		color = -1
@@ -536,6 +567,8 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 
 		alpha = max(alpha, nodeScore)
 	}
+
+	//stateScoreCache[hashedState] = nodeScore
 
 	return nodeScore
 }
