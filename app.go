@@ -267,18 +267,6 @@ func getPossibleActions(currentState state, playerId int) []action {
 		}
 	}
 
-	// sort actions by remove tile distance to opponent
-	opponentPosition := currentState.playersPosition[1-playerId]
-	sort.Slice(actions, func(i, j int) bool {
-		return distance(actions[i].removeTile, opponentPosition) < distance(actions[j].removeTile, opponentPosition)
-	})
-
-	// only keep the best actions
-	if len(actions) > 100 {
-		//debug(fmt.Sprintf("keeping only the 100 best actions (instead of %d)", len(actions)))
-		actions = actions[:8]
-	}
-
 	return actions
 }
 
@@ -476,6 +464,19 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 	}
 
 	possibleActions := getPossibleActions(currentState, playerId)
+
+	// sort actions by remove tile distance to opponent
+	opponentPosition := currentState.playersPosition[1-playerId]
+	sort.Slice(possibleActions, func(i, j int) bool {
+		return distance(possibleActions[i].removeTile, opponentPosition) < distance(possibleActions[j].removeTile, opponentPosition)
+	})
+
+	// only keep the best actions
+	MAX_KEEP := 5
+	if len(possibleActions) > MAX_KEEP {
+		//debug(fmt.Sprintf("keeping only the N best actions (instead of %d)", len(actions)))
+		possibleActions = possibleActions[:MAX_KEEP]
+	}
 
 	if len(possibleActions) == 0 {
 		return getScore(currentState, myPlayerId)
