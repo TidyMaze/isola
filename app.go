@@ -8,6 +8,7 @@ import (
 	_ "runtime/pprof"
 	"sort"
 	"strconv"
+	"strings"
 )
 
 /**
@@ -499,33 +500,33 @@ func getScore(currentState state, myPlayerId int) int {
 var stateScoreCache = make(map[string]int)
 
 func hashState(currentState state) string {
-	hash := ""
+	var strBuilder strings.Builder
 
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
 			if currentState.boardRemoved[y][x] {
-				hash += "X"
+				strBuilder.WriteString("X")
 			} else {
-				hash += "."
+				strBuilder.WriteString(".")
 			}
 		}
 	}
 
-	hash += strconv.Itoa(currentState.playersPosition[0].x)
-	hash += strconv.Itoa(currentState.playersPosition[0].y)
-	hash += strconv.Itoa(currentState.playersPosition[1].x)
-	hash += strconv.Itoa(currentState.playersPosition[1].y)
+	for playerId := 0; playerId < 2; playerId++ {
+		strBuilder.WriteString(strconv.Itoa(currentState.playersPosition[playerId].x))
+		strBuilder.WriteString(strconv.Itoa(currentState.playersPosition[playerId].y))
+	}
 
-	return hash
+	return strBuilder.String()
 }
 
 func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId int, playerId int) (nodeScore int) {
-	//hashedState := hashState(currentState)
-	//
-	//if score, ok := stateScoreCache[hashedState]; ok {
-	//	debug("cache hit for state " + hashedState)
-	//	return score
-	//}
+	hashedState := hashState(currentState)
+
+	if score, ok := stateScoreCache[hashedState]; ok {
+		//debug("cache hit for state " + hashedState)
+		return score
+	}
 
 	color := 1
 	if playerId != myPlayerId {
@@ -568,7 +569,7 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 		alpha = max(alpha, nodeScore)
 	}
 
-	//stateScoreCache[hashedState] = nodeScore
+	stateScoreCache[hashedState] = nodeScore
 
 	return nodeScore
 }
