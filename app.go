@@ -276,7 +276,7 @@ func getPossibleActions(currentState state, playerId int) []action {
 	// only keep the best actions
 	if len(actions) > 100 {
 		//debug(fmt.Sprintf("keeping only the 100 best actions (instead of %d)", len(actions)))
-		actions = actions[:50]
+		actions = actions[:8]
 	}
 
 	return actions
