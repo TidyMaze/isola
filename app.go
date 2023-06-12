@@ -223,9 +223,6 @@ func findBestMove(currentState state, myPlayerId int) (bestAction action, bestSc
 		if score > bestScore {
 			bestScore = score
 			bestAction = action
-
-			debugAny("found a better action", bestAction)
-			debugAny("found a better score", bestScore)
 		}
 	}
 
