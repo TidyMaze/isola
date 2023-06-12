@@ -211,7 +211,8 @@ func findBestMove(currentState state, myPlayerId int) (bestAction action, bestSc
 
 	possibleActions := getPossibleActions(currentState, myPlayerId)
 
-	//debugAny("possible moves", possibleActions)
+	//debugAny("possible moves", possibleActions
+	stateScoreCache = make(map[string]int)
 
 	for _, action := range possibleActions {
 		//debugAny(fmt.Sprintf("testing action %d/%d", iAction, len(possibleActions)), action)
@@ -257,12 +258,21 @@ func getPossibleActions(currentState state, playerId int) []action {
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
 
 			// a player can remove any tile that is not occupied by a pawn and not already removed
-			for y := 0; y < HEIGHT; y++ {
-				for x := 0; x < WIDTH; x++ {
-					c := coord{x, y}
-					if !isTileOccupied(&nextState, &c) && !isTileRemoved(&nextState, &c) {
-						actions = append(actions, action{adjacentTile, c})
-					}
+			//for y := 0; y < HEIGHT; y++ {
+			//	for x := 0; x < WIDTH; x++ {
+			//		c := coord{x, y}
+			//		if !isTileOccupied(&nextState, &c) && !isTileRemoved(&nextState, &c) {
+			//			actions = append(actions, action{adjacentTile, c})
+			//		}
+			//	}
+			//}
+			// it's better to remove the tile that is the closest to the opponent
+
+			opponentPosition := currentState.playersPosition[1-playerId]
+			adjacentTilesToOpponent := getAdjacentTiles(opponentPosition)
+			for _, adjacentTileToOpponent := range adjacentTilesToOpponent {
+				if !isTileOccupied(&nextState, &adjacentTileToOpponent) && !isTileRemoved(&nextState, &adjacentTileToOpponent) {
+					actions = append(actions, action{adjacentTile, adjacentTileToOpponent})
 				}
 			}
 		}
@@ -542,7 +552,7 @@ func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId in
 	possibleActions := getPossibleActions(currentState, playerId)
 
 	// only keep the best actions
-	MAX_KEEP := 30
+	MAX_KEEP := 100
 	if len(possibleActions) > MAX_KEEP {
 		// sort actions by remove tile distance to opponent
 		opponentPosition := currentState.playersPosition[1-playerId]
