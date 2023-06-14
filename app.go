@@ -272,19 +272,7 @@ func getPossibleActionsCount(currentState state, playerId int) int {
 
 	for _, adjacentTile := range adjacentTiles {
 		if !isTileOccupied(&currentState, &adjacentTile) && !isTileRemoved(&currentState, &adjacentTile) {
-			nextState := applyMove(currentState, adjacentTile, playerId)
-
-			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
-
-			// a player can remove any tile that is not occupied by a pawn and not already removed
-			for y := 0; y < HEIGHT; y++ {
-				for x := 0; x < WIDTH; x++ {
-					c := coord{x, y}
-					if !isTileOccupied(&nextState, &c) && !isTileRemoved(&nextState, &c) {
-						count++
-					}
-				}
-			}
+			count++
 		}
 	}
 
@@ -521,7 +509,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 	}
 
 	if score, ok := stateScoreCache[hashedState]; ok {
-		debugAny(fmt.Sprintf("cache hit for %s", hashedState), score)
+		//debugAny(fmt.Sprintf("cache hit for %s", hashedState), score)
 		return score, nil
 	}
 
