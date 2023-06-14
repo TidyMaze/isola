@@ -219,7 +219,6 @@ func findBestMove(currentState state, myPlayerId int) (bestAction *action, bestS
 
 func applyMove(currentState state, movePosition coord, playerId int) (nextState state) {
 	nextState = currentState
-	nextState.turn++
 	nextState.playersPosition[playerId] = movePosition
 	return
 }
@@ -227,6 +226,7 @@ func applyMove(currentState state, movePosition coord, playerId int) (nextState 
 func applyAction(state state, action *action, playerId int) (nextState state) {
 	nextState = applyMove(state, action.movePosition, playerId)
 	nextState.boardRemoved[action.removeTile.y][action.removeTile.x] = true
+	nextState.turn++
 	return
 }
 
