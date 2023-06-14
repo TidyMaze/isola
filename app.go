@@ -63,7 +63,7 @@ Response time per turn is ≤ 100 ms.
 
 var LOCAL = os.Getenv("LOCAL") == "true"
 
-const MAX_DEPTH = 3
+const MAX_DEPTH = 2
 
 // constant values
 const WIDTH = 9
