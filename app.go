@@ -6,7 +6,6 @@ import (
 	_ "net/http/pprof"
 	"os"
 	_ "runtime/pprof"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -206,25 +205,11 @@ func mainCG() {
 	}
 }
 
-func findBestMove(currentState state, myPlayerId int) (bestAction action, bestScore int) {
-	bestScore = -1000000
-
-	possibleActions := getPossibleActions(currentState, myPlayerId)
-
+func findBestMove(currentState state, myPlayerId int) (bestAction *action, bestScore int) {
 	//debugAny("possible moves", possibleActions
 	stateScoreCache = make(map[string]int)
 
-	for _, action := range possibleActions {
-		//debugAny(fmt.Sprintf("testing action %d/%d", iAction, len(possibleActions)), action)
-
-		nextState := applyAction(currentState, action, myPlayerId)
-
-		score := -alphaBeta(nextState, MAX_DEPTH, -1000000, 1000000, myPlayerId, 1-myPlayerId)
-		if score > bestScore {
-			bestScore = score
-			bestAction = action
-		}
-	}
+	bestScore, bestAction = minimax(currentState, MAX_DEPTH, myPlayerId, true)
 
 	return
 }
@@ -235,7 +220,7 @@ func applyMove(currentState state, movePosition coord, playerId int) (nextState 
 	return
 }
 
-func applyAction(state state, action action, playerId int) (nextState state) {
+func applyAction(state state, action *action, playerId int) (nextState state) {
 	nextState = applyMove(state, action.movePosition, playerId)
 	nextState.boardRemoved[action.removeTile.y][action.removeTile.x] = true
 	return
@@ -527,66 +512,77 @@ func hashState(currentState state) string {
 	return strBuilder.String()
 }
 
-func alphaBeta(currentState state, depth int, alpha int, beta int, myPlayerId int, playerId int) (nodeScore int) {
+func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer bool) (bestMoveValue int, bestMove *action) {
 	hashedState := hashState(currentState)
 
-	if score, ok := stateScoreCache[hashedState]; ok {
-		//debug("cache hit for state " + hashedState)
-		return score
+	playerId := 0
+	if !maximizingPlayer {
+		playerId = 1
 	}
 
-	color := 1
-	if playerId != myPlayerId {
-		color = -1
+	if score, ok := stateScoreCache[hashedState]; ok {
+		debugAny(fmt.Sprintf("cache hit for %s", hashedState), score)
+		return score, nil
 	}
 
 	if depth == 0 {
-		res := color * getScore(currentState, myPlayerId)
+		res := getScore(currentState, myPlayerId)
 		stateScoreCache[hashedState] = res
-		return res
+		debugAny(fmt.Sprintf("cache miss for %s", hashedState), res)
+		return res, nil
 	}
 
 	possibleActions := getPossibleActions(currentState, playerId)
 
-	// only keep the best actions
-	MAX_KEEP := 100
-	if len(possibleActions) > MAX_KEEP {
-		// sort actions by remove tile distance to opponent
-		opponentPosition := currentState.playersPosition[1-playerId]
-		sort.Slice(possibleActions, func(i, j int) bool {
-			return distance(possibleActions[i].removeTile, opponentPosition) < distance(possibleActions[j].removeTile, opponentPosition)
-		})
-
-		//debug(fmt.Sprintf("keeping only the N best actions (instead of %d)", len(possibleActions)))
-		possibleActions = possibleActions[:MAX_KEEP]
-	}
-
 	if len(possibleActions) == 0 {
-		res := color * getScore(currentState, myPlayerId)
+		res := getScore(currentState, myPlayerId)
 		stateScoreCache[hashedState] = res
-		return res
+		debugAny(fmt.Sprintf("cache miss for %s (no possible actions)", hashedState), res)
+		return res, nil
 	}
 
-	nodeScore = -1000000
+	if maximizingPlayer {
+		bestMoveValue = -1000000
+		bestMove = nil
 
-	for _, possibleAction := range possibleActions {
-		nextState := applyAction(currentState, possibleAction, playerId)
-		nodeScore = max(nodeScore, -alphaBeta(nextState, depth-1, -beta, -alpha, myPlayerId, 1-playerId))
+		for _, possibleAction := range possibleActions {
+			nextState := applyAction(currentState, &possibleAction, playerId)
+			value, _ := minimax(nextState, depth-1, myPlayerId, false)
 
-		if nodeScore >= beta {
-			stateScoreCache[hashedState] = nodeScore
-			return nodeScore
+			if value > bestMoveValue {
+				bestMoveValue = value
+				bestMove = &possibleAction
+			}
 		}
+	} else {
+		bestMoveValue = 1000000
+		bestMove = nil
 
-		alpha = max(alpha, nodeScore)
+		for _, possibleAction := range possibleActions {
+			nextState := applyAction(currentState, &possibleAction, playerId)
+			value, _ := minimax(nextState, depth-1, myPlayerId, true)
+
+			if value < bestMoveValue {
+				bestMoveValue = value
+				bestMove = &possibleAction
+			}
+		}
 	}
 
-	stateScoreCache[hashedState] = nodeScore
-	return nodeScore
+	stateScoreCache[hashedState] = bestMoveValue
+	return bestMoveValue, bestMove
 }
 
 func max(a int, b int) int {
 	if a > b {
+		return a
+	}
+
+	return b
+}
+
+func min(a int, b int) int {
+	if a < b {
 		return a
 	}
 
