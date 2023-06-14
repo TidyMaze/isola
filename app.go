@@ -570,6 +570,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 	}
 
 	stateScoreCache[hashedState] = bestMoveValue
+	debugAny(fmt.Sprintf("cache miss for %s (recursion)", hashedState), bestMoveValue)
 	return bestMoveValue, bestMove
 }
 
