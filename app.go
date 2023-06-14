@@ -77,6 +77,7 @@ type coord struct {
 type state struct {
 	playersPosition [2]coord
 	boardRemoved    [HEIGHT][WIDTH]bool
+	turn            int
 }
 
 type action struct {
@@ -467,11 +468,13 @@ func getScore(currentState state, myPlayerId int) int {
 
 	bonusEnd := 0
 	if opponentPossibleActions == 0 {
-		bonusEnd += 1000
+		bonusEnd += 1000000
+		bonusEnd -= currentState.turn * 1000
 	}
 
 	if myPossibleActions == 0 {
-		bonusEnd -= 500
+		bonusEnd -= 1000000
+		bonusEnd += currentState.turn * 1000
 	}
 
 	return bonusEnd + myPlayerCellsCount - opponentCellsCount + myPossibleActions - opponentPossibleActions
