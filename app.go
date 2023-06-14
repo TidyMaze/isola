@@ -135,6 +135,7 @@ func mainLocal() {
 	state := state{
 		playersPosition: [2]coord{{0, 4}, {8, 4}},
 		boardRemoved:    [HEIGHT][WIDTH]bool{},
+		turn:            0,
 	}
 
 	bestMove, bestScore := findBestMove(state, 0)
@@ -169,6 +170,7 @@ func mainCG() {
 	currentState := state{
 		playersPosition: [2]coord{playerPosition, opponentPosition},
 		boardRemoved:    [HEIGHT][WIDTH]bool{},
+		turn:            0,
 	}
 
 	for {
@@ -217,6 +219,7 @@ func findBestMove(currentState state, myPlayerId int) (bestAction *action, bestS
 
 func applyMove(currentState state, movePosition coord, playerId int) (nextState state) {
 	nextState = currentState
+	nextState.turn++
 	nextState.playersPosition[playerId] = movePosition
 	return
 }
