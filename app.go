@@ -528,7 +528,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 	if depth == 0 {
 		res := getScore(currentState, myPlayerId)
 		stateScoreCache[hashedState] = res
-		debugAny(fmt.Sprintf("cache miss for %s", hashedState), res)
+		//debugAny(fmt.Sprintf("cache miss for %s", hashedState), res)
 		return res, nil
 	}
 
@@ -537,7 +537,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 	if len(possibleActions) == 0 {
 		res := getScore(currentState, myPlayerId)
 		stateScoreCache[hashedState] = res
-		debugAny(fmt.Sprintf("cache miss for %s (no possible actions)", hashedState), res)
+		//debugAny(fmt.Sprintf("cache miss for %s (no possible actions)", hashedState), res)
 		return res, nil
 	}
 
@@ -570,7 +570,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 	}
 
 	stateScoreCache[hashedState] = bestMoveValue
-	debugAny(fmt.Sprintf("cache miss for %s (recursion)", hashedState), bestMoveValue)
+	//debugAny(fmt.Sprintf("cache miss for %s (recursion)", hashedState), bestMoveValue)
 	return bestMoveValue, bestMove
 }
 
