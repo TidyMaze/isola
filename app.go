@@ -131,6 +131,8 @@ func mainLocal() {
 
 	//defer pprof.StopCPUProfile()
 
+	initAdjacentTilesCache()
+
 	state := state{
 		playersPosition: [2]coord{{2, 6}, {8, 4}},
 		boardRemoved:    [HEIGHT][WIDTH]bool{},
@@ -147,6 +149,9 @@ func mainLocal() {
 }
 
 func mainCG() {
+
+	initAdjacentTilesCache()
+
 	var playerPositionX int
 	fmt.Scan(&playerPositionX)
 
@@ -353,35 +358,37 @@ func distance(coord1 coord, coord2 coord) int {
 
 var cacheAdjacentTiles = make(map[int][]coord)
 
-func getAdjacentTiles(position coord) (adjacentTiles []coord) {
+func initAdjacentTilesCache() {
+	for y := 0; y < HEIGHT; y++ {
+		for x := 0; x < WIDTH; x++ {
+			position := coord{x, y}
 
-	adjacentTiles, ok := cacheAdjacentTiles[position.y*WIDTH+position.x]
-	if ok {
-		return
-	}
+			adjacentTiles := make([]coord, 0, 8)
 
-	adjacentTiles = make([]coord, 0, 8)
+			coords := []coord{
+				{position.x - 1, position.y - 1},
+				{position.x - 1, position.y},
+				{position.x - 1, position.y + 1},
+				{position.x, position.y - 1},
+				{position.x, position.y + 1},
+				{position.x + 1, position.y - 1},
+				{position.x + 1, position.y},
+				{position.x + 1, position.y + 1},
+			}
 
-	coords := []coord{
-		{position.x - 1, position.y - 1},
-		{position.x - 1, position.y},
-		{position.x - 1, position.y + 1},
-		{position.x, position.y - 1},
-		{position.x, position.y + 1},
-		{position.x + 1, position.y - 1},
-		{position.x + 1, position.y},
-		{position.x + 1, position.y + 1},
-	}
+			for iCoord := 0; iCoord < len(coords); iCoord++ {
+				if coords[iCoord].x >= 0 && coords[iCoord].x < WIDTH && coords[iCoord].y >= 0 && coords[iCoord].y < HEIGHT {
+					adjacentTiles = append(adjacentTiles, coords[iCoord])
+				}
+			}
 
-	for iCoord := 0; iCoord < len(coords); iCoord++ {
-		if coords[iCoord].x >= 0 && coords[iCoord].x < WIDTH && coords[iCoord].y >= 0 && coords[iCoord].y < HEIGHT {
-			adjacentTiles = append(adjacentTiles, coords[iCoord])
+			cacheAdjacentTiles[position.y*WIDTH+position.x] = adjacentTiles
 		}
 	}
+}
 
-	cacheAdjacentTiles[position.y*WIDTH+position.x] = adjacentTiles
-
-	return
+func getAdjacentTiles(position coord) (adjacentTiles []coord) {
+	return cacheAdjacentTiles[position.y*WIDTH+position.x]
 }
 
 func isTileOccupied(currentState *state, position *coord) bool {
