@@ -237,7 +237,7 @@ func findBestMove(currentState state, myPlayerId int, startedAt time.Time) (best
 	var MaxDepth int
 
 	// iterative deepening
-	for MaxDepth = 1; !isTimeOver(startedAt) && MaxDepth < 5; MaxDepth++ {
+	for MaxDepth = 1; !isTimeOver(startedAt) && MaxDepth < 3; MaxDepth++ {
 		stateScoreCache = make(map[string]int)
 
 		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, startedAt)
@@ -589,7 +589,11 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 			nextState := applyAction(currentState, &possibleAction, playerId)
 			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, false, startedAt)
 
-			if value > bestMoveValue && !isTimeOverSkip {
+			if isTimeOverSkip {
+				return 0, nil, true
+			}
+
+			if value > bestMoveValue {
 				bestMoveValue = value
 				bestMove = &possibleAction
 			}
@@ -602,7 +606,11 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 			nextState := applyAction(currentState, &possibleAction, playerId)
 			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, true, startedAt)
 
-			if value < bestMoveValue && !isTimeOverSkip {
+			if isTimeOverSkip {
+				return 0, nil, true
+			}
+
+			if value < bestMoveValue {
 				bestMoveValue = value
 				bestMove = &possibleAction
 			}
