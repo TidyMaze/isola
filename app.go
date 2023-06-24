@@ -521,7 +521,7 @@ func getScore(currentState state, myPlayerId int) int {
 		bonusEnd -= 1000000
 		bonusEnd += currentState.turn * 1000
 	}
-
+	// todo fix
 	return myPlayerCellsCount - opponentCellsCount
 }
 
