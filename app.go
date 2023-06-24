@@ -586,7 +586,8 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 		bestMove = nil
 
 		for _, possibleAction := range possibleActions {
-			nextState := applyAction(currentState, &possibleAction, playerId)
+			possibleActionCopy := possibleAction
+			nextState := applyAction(currentState, &possibleActionCopy, playerId)
 			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, false, startedAt)
 
 			if isTimeOverSkip {
@@ -594,8 +595,9 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 			}
 
 			if value > bestMoveValue {
+				debugAny(fmt.Sprintf("new best move MAX for %s: %v", hashedState, possibleActionCopy), value)
 				bestMoveValue = value
-				bestMove = &possibleAction
+				bestMove = &possibleActionCopy
 			}
 		}
 	} else {
@@ -603,7 +605,8 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 		bestMove = nil
 
 		for _, possibleAction := range possibleActions {
-			nextState := applyAction(currentState, &possibleAction, playerId)
+			possibleActionCopy := possibleAction
+			nextState := applyAction(currentState, &possibleActionCopy, playerId)
 			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, true, startedAt)
 
 			if isTimeOverSkip {
@@ -611,8 +614,9 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 			}
 
 			if value < bestMoveValue {
+				debugAny(fmt.Sprintf("new best move MIN for %s: %v", hashedState, possibleActionCopy), value)
 				bestMoveValue = value
-				bestMove = &possibleAction
+				bestMove = &possibleActionCopy
 			}
 		}
 	}
