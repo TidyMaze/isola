@@ -239,6 +239,9 @@ func findBestMove(currentState state, myPlayerId int, startedAt time.Time) (best
 		if !isTimeOverSkip {
 			bestScore = depthBestScore
 			bestAction = depthBestAction
+
+			// show the best move found so far
+			debugAny(fmt.Sprintf("Depth %d", MaxDepth), fmt.Sprintf("best score: %d, best action: %v", bestScore, bestAction))
 		} else {
 			break
 		}
