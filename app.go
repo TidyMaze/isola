@@ -521,7 +521,7 @@ func getScore(currentState state, myPlayerId int) int {
 		bonusEnd -= 1000000
 		bonusEnd += currentState.turn * 1000
 	}
-	return bonusEnd + myPlayerCellsCount - opponentCellsCount + myPossibleActions - opponentPossibleActions
+	return bonusEnd + myPlayerCellsCount - opponentCellsCount + 10*myPossibleActions - 10*opponentPossibleActions
 }
 
 var stateScoreCache = make(map[string]int)
