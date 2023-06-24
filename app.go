@@ -132,7 +132,7 @@ func mainLocal() {
 	//defer pprof.StopCPUProfile()
 
 	state := state{
-		playersPosition: [2]coord{{0, 4}, {8, 4}},
+		playersPosition: [2]coord{{2, 6}, {8, 4}},
 		boardRemoved:    [HEIGHT][WIDTH]bool{},
 		turn:            0,
 	}
@@ -219,7 +219,7 @@ func isTimeOver(startedAt time.Time) bool {
 	var AllowedTime = 100 * time.Millisecond
 
 	if LOCAL {
-		AllowedTime = 5 * time.Second
+		AllowedTime = 10 * time.Second
 	}
 
 	return getCurrentDuration(startedAt) > AllowedTime
@@ -232,7 +232,7 @@ func findBestMove(currentState state, myPlayerId int, startedAt time.Time) (best
 	var MaxDepth int
 
 	// iterative deepening
-	for MaxDepth = 1; !isTimeOver(startedAt); MaxDepth++ {
+	for MaxDepth = 1; !isTimeOver(startedAt) && MaxDepth < 5; MaxDepth++ {
 		stateScoreCache = make(map[string]int)
 
 		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, startedAt)
@@ -458,7 +458,7 @@ func getPartition(currentState state) (partition [][]int) {
 	//log the grid of the partition
 	//if LOCAL {
 	//
-	//	debug("partition")
+	//	debug("\npartition")
 	//
 	//	for y := 0; y < HEIGHT; y++ {
 	//		line := ""
@@ -515,7 +515,7 @@ func getScore(currentState state, myPlayerId int) int {
 		bonusEnd += currentState.turn * 1000
 	}
 
-	return bonusEnd + myPlayerCellsCount - opponentCellsCount + myPossibleActions - opponentPossibleActions
+	return myPlayerCellsCount - opponentCellsCount
 }
 
 var stateScoreCache = make(map[string]int)

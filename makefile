@@ -10,7 +10,7 @@ view-profile-mem:
 	go tool pprof -http=localhost:8080 mem.prof
 
 bench-profile-cpu:
-	go test -bench=. -cpuprofile=cpu.prof
+	LOCAL=true go test -bench=. -cpuprofile=cpu.prof
 
 bench-profile-mem:
-	go test -bench=. -memprofile=mem.prof
+	LOCAL=true go test -bench=. -memprofile=mem.prof
