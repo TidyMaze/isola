@@ -237,7 +237,7 @@ func findBestMove(currentState state, myPlayerId int, startedAt time.Time) (best
 	var MaxDepth int
 
 	// iterative deepening
-	for MaxDepth = 1; !isTimeOver(startedAt) && MaxDepth < 3; MaxDepth++ {
+	for MaxDepth = 1; !isTimeOver(startedAt) && MaxDepth < 2; MaxDepth++ {
 		stateScoreCache = make(map[string]int)
 
 		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, startedAt)
