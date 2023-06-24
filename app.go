@@ -240,7 +240,7 @@ func findBestMove(currentState state, myPlayerId int, startedAt time.Time) (best
 	for MaxDepth = 1; !isTimeOver(startedAt) && MaxDepth < 10; MaxDepth++ {
 		stateScoreCache = make(map[string]int)
 
-		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, startedAt)
+		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, -1000000, 1000000, startedAt)
 		if !isTimeOverSkip {
 			bestScore = depthBestScore
 			bestAction = depthBestAction
@@ -547,7 +547,7 @@ func hashState(currentState state) string {
 	return strBuilder.String()
 }
 
-func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer bool, startedAt time.Time) (bestMoveValue int, bestMove *action, isTimeOverSkip bool) {
+func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer bool, alpha int, beta int, startedAt time.Time) (bestMoveValue int, bestMove *action, isTimeOverSkip bool) {
 	if isTimeOver(startedAt) {
 		return 0, nil, true
 	}
@@ -560,14 +560,12 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 	}
 
 	if score, ok := stateScoreCache[hashedState]; ok {
-		//debugAny(fmt.Sprintf("cache hit for %s", hashedState), score)
 		return score, nil, false
 	}
 
 	if depth == 0 {
 		res := getScore(currentState, myPlayerId)
 		stateScoreCache[hashedState] = res
-		//debugAny(fmt.Sprintf("cache miss for %s", hashedState), res)
 		return res, nil, false
 	}
 
@@ -576,7 +574,6 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 	if len(possibleActions) == 0 {
 		res := getScore(currentState, myPlayerId)
 		stateScoreCache[hashedState] = res
-		//debugAny(fmt.Sprintf("cache miss for %s (no possible actions)", hashedState), res)
 		return res, nil, false
 	}
 
@@ -587,16 +584,24 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 		for _, possibleAction := range possibleActions {
 			possibleActionCopy := possibleAction
 			nextState := applyAction(currentState, &possibleActionCopy, playerId)
-			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, false, startedAt)
+			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, false, alpha, beta, startedAt)
 
 			if isTimeOverSkip {
 				return 0, nil, true
 			}
 
 			if value > bestMoveValue {
-				//debugAny(fmt.Sprintf("new best move MAX for %s: %v", hashedState, possibleActionCopy), value)
 				bestMoveValue = value
 				bestMove = &possibleActionCopy
+			}
+
+			// Update alpha value
+			alpha = max(alpha, bestMoveValue)
+
+			// Perform alpha-beta pruning
+			if beta <= alpha {
+				//debugAny(fmt.Sprintf("pruning at depth %d", depth), fmt.Sprintf("alpha: %d, beta: %d", alpha, beta))
+				break
 			}
 		}
 	} else {
@@ -606,22 +611,29 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 		for _, possibleAction := range possibleActions {
 			possibleActionCopy := possibleAction
 			nextState := applyAction(currentState, &possibleActionCopy, playerId)
-			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, true, startedAt)
+			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, true, alpha, beta, startedAt)
 
 			if isTimeOverSkip {
 				return 0, nil, true
 			}
 
 			if value < bestMoveValue {
-				//debugAny(fmt.Sprintf("new best move MIN for %s: %v", hashedState, possibleActionCopy), value)
 				bestMoveValue = value
 				bestMove = &possibleActionCopy
+			}
+
+			// Update beta value
+			beta = min(beta, bestMoveValue)
+
+			// Perform alpha-beta pruning
+			if beta <= alpha {
+				//debugAny(fmt.Sprintf("pruning at depth %d", depth), fmt.Sprintf("alpha: %d, beta: %d", alpha, beta))
+				break
 			}
 		}
 	}
 
 	stateScoreCache[hashedState] = bestMoveValue
-	//debugAny(fmt.Sprintf("cache miss for %s (recursion)", hashedState), bestMoveValue)
 	return bestMoveValue, bestMove, false
 }
 
