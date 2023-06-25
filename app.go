@@ -406,16 +406,34 @@ func isTileRemoved(currentState *state, position *coord) bool {
 
 var distanceFromPlayer [2][WIDTH * HEIGHT]int
 
-func getPartition(currentState state) (partition [][]int) {
+func getScore(currentState state, myPlayerId int) int {
+	myPossibleActions := getPossibleActionsCount(currentState, myPlayerId)
+	opponentPossibleActions := getPossibleActionsCount(currentState, 1-myPlayerId)
+
+	// a good action is a action that maximize my player closest coords and minimize opponent closest coords
+	myPlayerCellsCount, opponentCellsCount := countPartitionCells(currentState, myPlayerId)
+
+	bonusEnd := 0
+	if opponentPossibleActions == 0 {
+		bonusEnd += 1000000
+		bonusEnd -= currentState.turn * 1000
+	}
+
+	if myPossibleActions == 0 {
+		bonusEnd -= 1000000
+		bonusEnd += currentState.turn * 1000
+	}
+	return bonusEnd + myPlayerCellsCount - opponentCellsCount + 10*myPossibleActions - 10*opponentPossibleActions
+}
+
+var partition = make([]int, HEIGHT*WIDTH)
+
+func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 	// we use a BFS to find all the tiles that are reachable from a player
 
 	// initialize the partition to -1
-	partition = make([][]int, HEIGHT)
-	for y := 0; y < HEIGHT; y++ {
-		partition[y] = make([]int, WIDTH)
-		for x := 0; x < WIDTH; x++ {
-			partition[y][x] = -1
-		}
+	for i := 0; i < WIDTH*HEIGHT; i++ {
+		partition[i] = -1
 	}
 
 	for i := 0; i < WIDTH*HEIGHT; i++ {
@@ -456,77 +474,30 @@ func getPartition(currentState state) (partition [][]int) {
 			}
 
 			if distanceFromPlayer[0][y*WIDTH+x] == -1 && distanceFromPlayer[1][y*WIDTH+x] != -1 {
-				partition[y][x] = 1
+				partition[y*WIDTH+x] = 1
 			} else if distanceFromPlayer[0][y*WIDTH+x] != -1 && distanceFromPlayer[1][y*WIDTH+x] == -1 {
-				partition[y][x] = 0
+				partition[y*WIDTH+x] = 0
 			} else if distanceFromPlayer[0][y*WIDTH+x] < distanceFromPlayer[1][y*WIDTH+x] {
-				partition[y][x] = 0
+				partition[y*WIDTH+x] = 0
 			} else if distanceFromPlayer[0][y*WIDTH+x] > distanceFromPlayer[1][y*WIDTH+x] {
-				partition[y][x] = 1
+				partition[y*WIDTH+x] = 1
 			}
 		}
 	}
-
-	//log the grid of the partition
-	//if LOCAL {
-	//
-	//	debug("\npartition")
-	//
-	//	for y := 0; y < HEIGHT; y++ {
-	//		line := ""
-	//		for x := 0; x < WIDTH; x++ {
-	//			// for each cell, padding of 2 characters
-	//
-	//			if currentState.playersPosition[0] == (coord{x, y}) {
-	//				line += "A"
-	//			} else if currentState.playersPosition[1] == (coord{x, y}) {
-	//				line += "B"
-	//			} else if currentState.boardRemoved[y][x] {
-	//				line += "X"
-	//			} else if partition[y][x] == -1 {
-	//				line += "."
-	//			} else {
-	//				line += strconv.Itoa(partition[y][x])
-	//			}
-	//		}
-	//		debug(line)
-	//	}
-	//}
-
-	return
-}
-
-func getScore(currentState state, myPlayerId int) int {
-	myPossibleActions := getPossibleActionsCount(currentState, myPlayerId)
-	opponentPossibleActions := getPossibleActionsCount(currentState, 1-myPlayerId)
-
-	// a good action is a action that maximize my player closest coords and minimize opponent closest coords
-	partition := getPartition(currentState)
 
 	myPlayerCellsCount := 0
 	opponentCellsCount := 0
 
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
-			if partition[y][x] == myPlayerId {
+			if partition[y*WIDTH+x] == myPlayerId {
 				myPlayerCellsCount++
-			} else if partition[y][x] == 1-myPlayerId {
+			} else if partition[y*WIDTH+x] == 1-myPlayerId {
 				opponentCellsCount++
 			}
 		}
 	}
-
-	bonusEnd := 0
-	if opponentPossibleActions == 0 {
-		bonusEnd += 1000000
-		bonusEnd -= currentState.turn * 1000
-	}
-
-	if myPossibleActions == 0 {
-		bonusEnd -= 1000000
-		bonusEnd += currentState.turn * 1000
-	}
-	return bonusEnd + myPlayerCellsCount - opponentCellsCount + 10*myPossibleActions - 10*opponentPossibleActions
+	return myPlayerCellsCount, opponentCellsCount
 }
 
 var stateScoreCache = make(map[string]int)
