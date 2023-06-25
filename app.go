@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	_ "net/http/pprof"
 	"os"
 	_ "runtime/pprof"
@@ -584,6 +585,11 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 		stateScoreCache[hashedState] = res
 		return res, nil, false
 	}
+
+	// ordering moves (randomly)
+	rand.Shuffle(len(possibleActions), func(i, j int) {
+		possibleActions[i], possibleActions[j] = possibleActions[j], possibleActions[i]
+	})
 
 	if maximizingPlayer {
 		bestMoveValue = -1000000
