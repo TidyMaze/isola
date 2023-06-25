@@ -288,22 +288,26 @@ func getPossibleActions(currentState state, playerId int) []action {
 
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
 
-			// a player can remove any tile that is not occupied by a pawn and not already removed
-			//for y := 0; y < HEIGHT; y++ {
-			//	for x := 0; x < WIDTH; x++ {
-			//		c := coord{x, y}
-			//		if !isTileOccupied(&nextState, &c) && !isTileRemoved(&nextState, &c) {
-			//			actions = append(actions, action{adjacentTile, c})
-			//		}
-			//	}
-			//}
-			// it's better to remove the tile that is the closest to the opponent
-
 			opponentPosition := currentState.playersPosition[1-playerId]
 			adjacentTilesToOpponent := getAdjacentTiles(opponentPosition)
+
+			foundOneRemoveTile := false
+
 			for _, adjacentTileToOpponent := range *adjacentTilesToOpponent {
 				if !isTileOccupied(&nextState, &adjacentTileToOpponent) && !isTileRemoved(&nextState, &adjacentTileToOpponent) {
 					actions = append(actions, action{adjacentTile, adjacentTileToOpponent})
+					foundOneRemoveTile = true
+				}
+			}
+
+			if !foundOneRemoveTile {
+				for y := 0; y < HEIGHT; y++ {
+					for x := 0; x < WIDTH; x++ {
+						c := coord{x, y}
+						if !isTileOccupied(&nextState, &c) && !isTileRemoved(&nextState, &c) {
+							actions = append(actions, action{adjacentTile, c})
+						}
+					}
 				}
 			}
 		}
