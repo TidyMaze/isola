@@ -15,3 +15,5 @@ TODO:
 - [ ] Improve the evaluation function
 - [ ] Improve the move ordering (currently it's random)
 - [ ] Improve performance (cache the moves, etc.)
+- [ ] Implement negamax
+- [ ] Implement MCTS (Monte Carlo Tree Search) and compare the results
