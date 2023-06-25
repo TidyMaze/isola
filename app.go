@@ -141,7 +141,13 @@ func mainLocal() {
 
 	startedAt := time.Now()
 
-	bestMove, bestScore := findBestMove(state, 0, startedAt)
+	deadline := startedAt.Add(1000 * time.Millisecond)
+
+	if state.turn > 0 {
+		deadline = startedAt.Add(100 * time.Millisecond)
+	}
+
+	bestMove, bestScore := findBestMove(state, 0, deadline)
 
 	debugAny("best move", bestMove)
 	debugAny("best score", bestScore)
@@ -185,6 +191,14 @@ func mainCG() {
 
 		startedAt := time.Now()
 
+		deadline := startedAt.Add(1000 * time.Millisecond)
+
+		if currentState.turn > 0 {
+			deadline = startedAt.Add(100 * time.Millisecond)
+		}
+
+		debugAny(fmt.Sprintf("deadline: %v (%v)", deadline, deadline.Sub(startedAt)), nil)
+
 		// opponentPositionY: opponent's coordinates.
 		var opponentPositionY int
 		fmt.Scan(&opponentPositionY)
@@ -204,7 +218,7 @@ func mainCG() {
 
 		debugAny("current state", currentState)
 
-		bestAction, bestScore := findBestMove(currentState, myPlayerId, startedAt)
+		bestAction, bestScore := findBestMove(currentState, myPlayerId, deadline)
 
 		debugAny("best action", bestAction)
 		debugAny("best score", bestScore)
@@ -220,27 +234,21 @@ func getCurrentDuration(startedAt time.Time) time.Duration {
 	return time.Since(startedAt)
 }
 
-func isTimeOver(startedAt time.Time) bool {
-	var AllowedTime = 100 * time.Millisecond
-
-	if LOCAL {
-		AllowedTime = 10 * time.Second
-	}
-
-	return getCurrentDuration(startedAt) > AllowedTime
+func isTimeOver(deadline time.Time) bool {
+	return time.Now().After(deadline)
 }
 
-func findBestMove(currentState state, myPlayerId int, startedAt time.Time) (bestAction *action, bestScore int) {
+func findBestMove(currentState state, myPlayerId int, deadline time.Time) (bestAction *action, bestScore int) {
 	bestAction = nil
 	bestScore = -1000000
 
 	var MaxDepth int
 
 	// iterative deepening
-	for MaxDepth = 1; !isTimeOver(startedAt) && MaxDepth < 10; MaxDepth++ {
+	for MaxDepth = 1; !isTimeOver(deadline) && MaxDepth < 10; MaxDepth++ {
 		stateScoreCache = make(map[string]int)
 
-		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, -1000000, 1000000, startedAt)
+		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, -1000000, 1000000, deadline)
 		if !isTimeOverSkip {
 			bestScore = depthBestScore
 			bestAction = depthBestAction
