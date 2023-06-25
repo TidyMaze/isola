@@ -426,15 +426,8 @@ func getScore(currentState state, myPlayerId int) int {
 	return bonusEnd + myPlayerCellsCount - opponentCellsCount + 10*myPossibleActions - 10*opponentPossibleActions
 }
 
-var partition = make([]int, HEIGHT*WIDTH)
-
 func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 	// we use a BFS to find all the tiles that are reachable from a player
-
-	// initialize the partition to -1
-	for i := 0; i < WIDTH*HEIGHT; i++ {
-		partition[i] = -1
-	}
 
 	for i := 0; i < WIDTH*HEIGHT; i++ {
 		distanceFromPlayer[0][i] = -1
@@ -465,6 +458,9 @@ func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 		}
 	}
 
+	myPlayerCellsCount := 0
+	opponentCellsCount := 0
+
 	// for each tile, find the closest player
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
@@ -473,26 +469,24 @@ func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 				continue
 			}
 
+			playerToOwn := -1
+
 			if distanceFromPlayer[0][y*WIDTH+x] == -1 && distanceFromPlayer[1][y*WIDTH+x] != -1 {
-				partition[y*WIDTH+x] = 1
+				playerToOwn = 1
 			} else if distanceFromPlayer[0][y*WIDTH+x] != -1 && distanceFromPlayer[1][y*WIDTH+x] == -1 {
-				partition[y*WIDTH+x] = 0
+				playerToOwn = 0
 			} else if distanceFromPlayer[0][y*WIDTH+x] < distanceFromPlayer[1][y*WIDTH+x] {
-				partition[y*WIDTH+x] = 0
+				playerToOwn = 0
 			} else if distanceFromPlayer[0][y*WIDTH+x] > distanceFromPlayer[1][y*WIDTH+x] {
-				partition[y*WIDTH+x] = 1
+				playerToOwn = 1
 			}
-		}
-	}
 
-	myPlayerCellsCount := 0
-	opponentCellsCount := 0
-
-	for y := 0; y < HEIGHT; y++ {
-		for x := 0; x < WIDTH; x++ {
-			if partition[y*WIDTH+x] == myPlayerId {
+			if playerToOwn == -1 {
+				// if the tile is reachable by both players at the same distance, it is not part of the partition
+				continue
+			} else if playerToOwn == myPlayerId {
 				myPlayerCellsCount++
-			} else if partition[y*WIDTH+x] == 1-myPlayerId {
+			} else if playerToOwn == 1-myPlayerId {
 				opponentCellsCount++
 			}
 		}
