@@ -142,11 +142,7 @@ func mainLocal() {
 
 	startedAt := time.Now()
 
-	deadline := startedAt.Add(1000 * time.Millisecond)
-
-	if state.turn > 0 {
-		deadline = startedAt.Add(100 * time.Millisecond)
-	}
+	deadline := startedAt.Add(10000 * time.Millisecond)
 
 	bestMove, bestScore := findBestMove(state, 0, deadline)
 
@@ -246,7 +242,7 @@ func findBestMove(currentState state, myPlayerId int, deadline time.Time) (bestA
 	var MaxDepth int
 
 	// iterative deepening
-	for MaxDepth = 1; !isTimeOver(deadline) && MaxDepth < 10; MaxDepth++ {
+	for MaxDepth = 1; !isTimeOver(deadline) && MaxDepth < 50; MaxDepth++ {
 		stateScoreCache = make(map[string]int)
 
 		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, -1000000, 1000000, deadline)
@@ -280,13 +276,13 @@ func applyAction(state state, action *action, playerId int) (nextState state) {
 }
 
 func getPossibleActions(currentState state, playerId int) []action {
-	actions := make([]action, 0, 8*WIDTH*HEIGHT)
+	actions := make([]action, 0)
 
 	myPosition := currentState.playersPosition[playerId]
 
 	adjacentTiles := getAdjacentTiles(myPosition)
 
-	for _, adjacentTile := range adjacentTiles {
+	for _, adjacentTile := range *adjacentTiles {
 		if !isTileOccupied(&currentState, &adjacentTile) && !isTileRemoved(&currentState, &adjacentTile) {
 			nextState := applyMove(currentState, adjacentTile, playerId)
 
@@ -305,7 +301,7 @@ func getPossibleActions(currentState state, playerId int) []action {
 
 			opponentPosition := currentState.playersPosition[1-playerId]
 			adjacentTilesToOpponent := getAdjacentTiles(opponentPosition)
-			for _, adjacentTileToOpponent := range adjacentTilesToOpponent {
+			for _, adjacentTileToOpponent := range *adjacentTilesToOpponent {
 				if !isTileOccupied(&nextState, &adjacentTileToOpponent) && !isTileRemoved(&nextState, &adjacentTileToOpponent) {
 					actions = append(actions, action{adjacentTile, adjacentTileToOpponent})
 				}
@@ -323,7 +319,7 @@ func getPossibleActionsCount(currentState state, playerId int) int {
 
 	adjacentTiles := getAdjacentTiles(myPosition)
 
-	for _, adjacentTile := range adjacentTiles {
+	for _, adjacentTile := range *adjacentTiles {
 		if !isTileOccupied(&currentState, &adjacentTile) && !isTileRemoved(&currentState, &adjacentTile) {
 			count++
 		}
@@ -365,7 +361,7 @@ func distance(coord1 coord, coord2 coord) int {
 //	}
 //}
 
-var cacheAdjacentTiles = make(map[int][]coord)
+var cacheAdjacentTiles = make([][]coord, WIDTH*HEIGHT)
 
 func initAdjacentTilesCache() {
 	for y := 0; y < HEIGHT; y++ {
@@ -396,8 +392,8 @@ func initAdjacentTilesCache() {
 	}
 }
 
-func getAdjacentTiles(position coord) (adjacentTiles []coord) {
-	return cacheAdjacentTiles[position.y*WIDTH+position.x]
+func getAdjacentTiles(position coord) (adjacentTiles *[]coord) {
+	return &(cacheAdjacentTiles[position.y*WIDTH+position.x])
 }
 
 func isTileOccupied(currentState *state, position *coord) bool {
@@ -440,8 +436,8 @@ func getPartition(currentState state) (partition [][]int) {
 
 			// for each adjacent tile, if it is not occupied and not already visited, add it to the queue
 			adjacentTiles := getAdjacentTiles(currentPosition)
-			for iAdjacentTile := 0; iAdjacentTile < len(adjacentTiles); iAdjacentTile++ {
-				adj := &adjacentTiles[iAdjacentTile]
+			for iAdjacentTile := 0; iAdjacentTile < len(*adjacentTiles); iAdjacentTile++ {
+				adj := &(*adjacentTiles)[iAdjacentTile]
 
 				if !isTileOccupied(&currentState, adj) && !isTileRemoved(&currentState, adj) && distanceFromPlayer[playerId][adj.y*WIDTH+adj.x] == -1 {
 					distanceFromPlayer[playerId][adj.y*WIDTH+adj.x] = distanceFromPlayer[playerId][currentPosition.y*WIDTH+currentPosition.x] + 1
@@ -537,6 +533,8 @@ var stateScoreCache = make(map[string]int)
 
 func hashState(currentState state) string {
 	var strBuilder strings.Builder
+
+	strBuilder.Grow(WIDTH*HEIGHT + 4)
 
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
