@@ -454,8 +454,10 @@ func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 			for iAdjacentTile := 0; iAdjacentTile < len(*adjacentTiles); iAdjacentTile++ {
 				adj := &(*adjacentTiles)[iAdjacentTile]
 
-				if !isTileOccupied(&currentState, adj) && !isTileRemoved(&currentState, adj) && distanceFromPlayer[playerId][adj.y*WIDTH+adj.x] == -1 {
-					distanceFromPlayer[playerId][adj.y*WIDTH+adj.x] = distanceFromPlayer[playerId][currentPosition.y*WIDTH+currentPosition.x] + 1
+				tileIndex := adj.y*WIDTH + adj.x
+
+				if !isTileOccupied(&currentState, adj) && !isTileRemoved(&currentState, adj) && distanceFromPlayer[playerId][tileIndex] == -1 {
+					distanceFromPlayer[playerId][tileIndex] = distanceFromPlayer[playerId][currentPosition.y*WIDTH+currentPosition.x] + 1
 					queue = append(queue, *adj)
 				}
 			}
@@ -468,20 +470,22 @@ func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 	// for each tile, find the closest player
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
-			if distanceFromPlayer[0][y*WIDTH+x] == -1 && distanceFromPlayer[1][y*WIDTH+x] == -1 {
+			tileIndex := y*WIDTH + x
+
+			if distanceFromPlayer[0][tileIndex] == -1 && distanceFromPlayer[1][tileIndex] == -1 {
 				// if the tile is not reachable by any player, it is not part of the partition
 				continue
 			}
 
 			playerToOwn := -1
 
-			if distanceFromPlayer[0][y*WIDTH+x] == -1 && distanceFromPlayer[1][y*WIDTH+x] != -1 {
+			if distanceFromPlayer[0][tileIndex] == -1 && distanceFromPlayer[1][tileIndex] != -1 {
 				playerToOwn = 1
-			} else if distanceFromPlayer[0][y*WIDTH+x] != -1 && distanceFromPlayer[1][y*WIDTH+x] == -1 {
+			} else if distanceFromPlayer[0][tileIndex] != -1 && distanceFromPlayer[1][tileIndex] == -1 {
 				playerToOwn = 0
-			} else if distanceFromPlayer[0][y*WIDTH+x] < distanceFromPlayer[1][y*WIDTH+x] {
+			} else if distanceFromPlayer[0][tileIndex] < distanceFromPlayer[1][tileIndex] {
 				playerToOwn = 0
-			} else if distanceFromPlayer[0][y*WIDTH+x] > distanceFromPlayer[1][y*WIDTH+x] {
+			} else if distanceFromPlayer[0][tileIndex] > distanceFromPlayer[1][tileIndex] {
 				playerToOwn = 1
 			}
 
