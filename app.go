@@ -451,14 +451,12 @@ func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 
 			// for each adjacent tile, if it is not occupied and not already visited, add it to the queue
 			adjacentTiles := getAdjacentTiles(currentPosition)
-			for iAdjacentTile := 0; iAdjacentTile < len(*adjacentTiles); iAdjacentTile++ {
-				adj := &(*adjacentTiles)[iAdjacentTile]
-
+			for _, adj := range *adjacentTiles {
 				tileIndex := adj.y*WIDTH + adj.x
 
-				if !isTileOccupied(&currentState, adj) && !isTileRemoved(&currentState, adj) && distanceFromPlayer[playerId][tileIndex] == -1 {
+				if !isTileOccupied(&currentState, &adj) && !isTileRemoved(&currentState, &adj) && distanceFromPlayer[playerId][tileIndex] == -1 {
 					distanceFromPlayer[playerId][tileIndex] = distanceFromPlayer[playerId][currentPosition.y*WIDTH+currentPosition.x] + 1
-					queue = append(queue, *adj)
+					queue = append(queue, adj)
 				}
 			}
 		}
@@ -499,6 +497,7 @@ func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 			}
 		}
 	}
+
 	return myPlayerCellsCount, opponentCellsCount
 }
 
