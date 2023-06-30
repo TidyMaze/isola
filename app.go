@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math"
-	"math/big"
 	"math/rand"
 	_ "net/http/pprof"
 	"os"
@@ -77,9 +76,8 @@ type coord struct {
 
 type state struct {
 	playersPosition [2]coord
-	// compact representation of the boardRemoved, encoded as 81 bits
-	boardRemoved big.Int
-	turn         int
+	boardRemoved    [HEIGHT][WIDTH]bool
+	turn            int
 }
 
 type action struct {
@@ -138,7 +136,7 @@ func mainLocal() {
 
 	state := state{
 		playersPosition: [2]coord{{2, 6}, {8, 4}},
-		boardRemoved:    big.Int{},
+		boardRemoved:    [HEIGHT][WIDTH]bool{},
 		turn:            0,
 	}
 
@@ -180,7 +178,7 @@ func mainCG() {
 
 	currentState := state{
 		playersPosition: [2]coord{playerPosition, opponentPosition},
-		boardRemoved:    big.Int{},
+		boardRemoved:    [HEIGHT][WIDTH]bool{},
 		turn:            0,
 	}
 
@@ -210,8 +208,7 @@ func mainCG() {
 		fmt.Scan(&opponentLastRemovedTileY)
 
 		if opponentLastRemovedTileX != -1 && opponentLastRemovedTileY != -1 {
-			index := opponentLastRemovedTileY*WIDTH + opponentLastRemovedTileX
-			currentState.boardRemoved.SetBit(&currentState.boardRemoved, index, 1)
+			currentState.boardRemoved[opponentLastRemovedTileY][opponentLastRemovedTileX] = true
 		}
 
 		currentState.playersPosition[1-myPlayerId] = coord{opponentPositionX, opponentPositionY}
@@ -273,8 +270,7 @@ func applyMove(currentState *state, movePosition coord, playerId int) *state {
 
 func applyAction(state *state, action *action, playerId int) *state {
 	nextState := applyMove(state, action.movePosition, playerId)
-	index := action.removeTile.y*WIDTH + action.removeTile.x
-	nextState.boardRemoved.SetBit(&nextState.boardRemoved, int(index), 1)
+	nextState.boardRemoved[action.removeTile.y][action.removeTile.x] = true
 	nextState.turn++
 	return nextState
 }
@@ -409,8 +405,7 @@ func isTileOccupied(currentState *state, position *coord) bool {
 }
 
 func isTileRemoved(currentState *state, position *coord) bool {
-	index := position.y*WIDTH + position.x
-	return currentState.boardRemoved.Bit(int(index)) == 1
+	return currentState.boardRemoved[position.y][position.x]
 }
 
 var distanceFromPlayer [2][WIDTH * HEIGHT]int
@@ -541,8 +536,7 @@ func hashState(currentState state) string {
 
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
-			index := y*WIDTH + x
-			if currentState.boardRemoved.Bit(index) == 1 {
+			if currentState.boardRemoved[y][x] {
 				strBuilder.WriteString("X")
 			} else {
 				strBuilder.WriteString(".")
