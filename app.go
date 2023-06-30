@@ -430,6 +430,24 @@ func getScore(currentState state, myPlayerId int) int {
 	return bonusEnd + myPlayerCellsCount - opponentCellsCount + 10*myPossibleActions - 10*opponentPossibleActions
 }
 
+func getScorePossibleAction(currentState state, myPlayerId int) int {
+	myPossibleActions := getPossibleActionsCount(currentState, myPlayerId)
+	opponentPossibleActions := getPossibleActionsCount(currentState, 1-myPlayerId)
+
+	bonusEnd := 0
+	if opponentPossibleActions == 0 {
+		bonusEnd += 1000000
+		bonusEnd -= currentState.turn * 1000
+	}
+
+	if myPossibleActions == 0 {
+		bonusEnd -= 1000000
+		bonusEnd += currentState.turn * 1000
+	}
+
+	return bonusEnd + 10*myPossibleActions - 10*opponentPossibleActions
+}
+
 func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 	// we use a BFS to find all the tiles that are reachable from a player
 
@@ -566,7 +584,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 	actionWithStatesAndScores := make([]actionWithStateAndScore, len(possibleActions))
 	for i, possibleAction := range possibleActions {
 		nextState := applyAction(currentState, &possibleAction, playerId)
-		scoreNextState := getScore(nextState, myPlayerId)
+		scoreNextState := getScorePossibleAction(nextState, myPlayerId)
 		actionWithStatesAndScores[i] = actionWithStateAndScore{possibleAction, nextState, scoreNextState}
 	}
 
