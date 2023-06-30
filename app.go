@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"math"
-	"math/rand"
 	_ "net/http/pprof"
 	"os"
 	_ "runtime/pprof"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -526,6 +526,12 @@ func hashState(currentState state) string {
 	return strBuilder.String()
 }
 
+type actionWithStateAndScore struct {
+	action action
+	state  state
+	score  int
+}
+
 func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer bool, alpha int, beta int, startedAt time.Time) (bestMoveValue int, bestMove *action, isTimeOverSkip bool) {
 	if isTimeOver(startedAt) {
 		return 0, nil, true
@@ -556,18 +562,29 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 		return res, nil, false
 	}
 
-	// ordering moves (randomly)
-	rand.Shuffle(len(possibleActions), func(i, j int) {
-		possibleActions[i], possibleActions[j] = possibleActions[j], possibleActions[i]
+	// for each possible action, we apply it and score the resulting state
+	actionWithStatesAndScores := make([]actionWithStateAndScore, len(possibleActions))
+	for i, possibleAction := range possibleActions {
+		nextState := applyAction(currentState, &possibleAction, playerId)
+		scoreNextState := getScore(nextState, myPlayerId)
+		actionWithStatesAndScores[i] = actionWithStateAndScore{possibleAction, nextState, scoreNextState}
+	}
+
+	// ordering moves by score
+	sort.Slice(actionWithStatesAndScores, func(i, j int) bool {
+		if maximizingPlayer {
+			return actionWithStatesAndScores[i].score > actionWithStatesAndScores[j].score
+		} else {
+			return actionWithStatesAndScores[i].score < actionWithStatesAndScores[j].score
+		}
 	})
 
 	if maximizingPlayer {
 		bestMoveValue = -1000000
 		bestMove = nil
 
-		for _, possibleAction := range possibleActions {
-			possibleActionCopy := possibleAction
-			nextState := applyAction(currentState, &possibleActionCopy, playerId)
+		for _, possibleAction := range actionWithStatesAndScores {
+			nextState := possibleAction.state
 			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, false, alpha, beta, startedAt)
 
 			if isTimeOverSkip {
@@ -576,6 +593,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 
 			if value > bestMoveValue {
 				bestMoveValue = value
+				possibleActionCopy := possibleAction.action
 				bestMove = &possibleActionCopy
 			}
 
@@ -592,9 +610,8 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 		bestMoveValue = 1000000
 		bestMove = nil
 
-		for _, possibleAction := range possibleActions {
-			possibleActionCopy := possibleAction
-			nextState := applyAction(currentState, &possibleActionCopy, playerId)
+		for _, possibleAction := range actionWithStatesAndScores {
+			nextState := possibleAction.state
 			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, true, alpha, beta, startedAt)
 
 			if isTimeOverSkip {
@@ -603,6 +620,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 
 			if value < bestMoveValue {
 				bestMoveValue = value
+				possibleActionCopy := possibleAction.action
 				bestMove = &possibleActionCopy
 			}
 
