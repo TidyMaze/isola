@@ -70,8 +70,8 @@ const WIDTH = 9
 const HEIGHT = 9
 
 type coord struct {
-	x int
-	y int
+	x uint8
+	y uint8
 }
 
 type state struct {
@@ -155,11 +155,11 @@ func mainCG() {
 
 	initAdjacentTilesCache()
 
-	var playerPositionX int
+	var playerPositionX uint8
 	fmt.Scan(&playerPositionX)
 
 	// playerPositionY: player's coordinates.
-	var playerPositionY int
+	var playerPositionY uint8
 	fmt.Scan(&playerPositionY)
 
 	playerPosition := coord{playerPositionX, playerPositionY}
@@ -183,7 +183,7 @@ func mainCG() {
 	}
 
 	for {
-		var opponentPositionX int
+		var opponentPositionX uint8
 		fmt.Scan(&opponentPositionX)
 
 		startedAt := time.Now()
@@ -197,7 +197,7 @@ func mainCG() {
 		debugAny(fmt.Sprintf("deadline: %v (%v)", deadline, deadline.Sub(startedAt)), nil)
 
 		// opponentPositionY: opponent's coordinates.
-		var opponentPositionY int
+		var opponentPositionY uint8
 		fmt.Scan(&opponentPositionY)
 
 		var opponentLastRemovedTileX int
@@ -301,8 +301,8 @@ func getPossibleActions(currentState state, playerId int) []action {
 			}
 
 			if !foundOneRemoveTile {
-				for y := 0; y < HEIGHT; y++ {
-					for x := 0; x < WIDTH; x++ {
+				for y := uint8(0); y < HEIGHT; y++ {
+					for x := uint8(0); x < WIDTH; x++ {
 						c := coord{x, y}
 						if !isTileOccupied(nextState, &c) && !isTileRemoved(nextState, &c) {
 							actions = append(actions, action{adjacentTile, c})
@@ -368,8 +368,8 @@ func distance(coord1 coord, coord2 coord) int {
 var cacheAdjacentTiles = make([][]coord, WIDTH*HEIGHT)
 
 func initAdjacentTilesCache() {
-	for y := 0; y < HEIGHT; y++ {
-		for x := 0; x < WIDTH; x++ {
+	for y := uint8(0); y < HEIGHT; y++ {
+		for x := uint8(0); x < WIDTH; x++ {
 			position := coord{x, y}
 
 			adjacentTiles := make([]coord, 0, 8)
@@ -545,8 +545,8 @@ func hashState(currentState state) string {
 	}
 
 	for playerId := 0; playerId < 2; playerId++ {
-		strBuilder.WriteString(strconv.Itoa(currentState.playersPosition[playerId].x))
-		strBuilder.WriteString(strconv.Itoa(currentState.playersPosition[playerId].y))
+		strBuilder.WriteString(strconv.Itoa(int(currentState.playersPosition[playerId].x)))
+		strBuilder.WriteString(strconv.Itoa(int(currentState.playersPosition[playerId].y)))
 	}
 
 	return strBuilder.String()
