@@ -410,7 +410,7 @@ func isTileRemoved(currentState *state, position *coord) bool {
 
 var distanceFromPlayer [2][WIDTH * HEIGHT]int
 
-func getScore(currentState state, myPlayerId int) int {
+func getScore(currentState state, myPlayerId int, currentPlayerId int) int {
 	myPossibleActions := getPossibleActionsCount(currentState, myPlayerId)
 	opponentPossibleActions := getPossibleActionsCount(currentState, 1-myPlayerId)
 
@@ -418,15 +418,23 @@ func getScore(currentState state, myPlayerId int) int {
 	myPlayerCellsCount, opponentCellsCount := countPartitionCells(currentState, myPlayerId)
 
 	bonusEnd := 0
-	if opponentPossibleActions == 0 {
+
+	myTurn := myPlayerId == currentPlayerId
+
+	if opponentPossibleActions == 0 && !myTurn {
 		bonusEnd += 1000000
 		bonusEnd -= currentState.turn * 1000
+	} else if opponentPossibleActions == 0 {
+		bonusEnd += 1000000 / 2
 	}
 
-	if myPossibleActions == 0 {
+	if myPossibleActions == 0 && myTurn {
 		bonusEnd -= 1000000
 		bonusEnd += currentState.turn * 1000
+	} else if myPossibleActions == 0 {
+		bonusEnd -= 1000000 / 2
 	}
+
 	return bonusEnd + myPlayerCellsCount - opponentCellsCount + 10*myPossibleActions - 10*opponentPossibleActions
 }
 
@@ -567,7 +575,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 	}
 
 	if depth == 0 {
-		res := getScore(currentState, myPlayerId)
+		res := getScore(currentState, myPlayerId, playerId)
 		stateScoreCache[hashedState] = res
 		return res, nil, false
 	}
@@ -575,7 +583,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 	possibleActions := getPossibleActions(currentState, playerId)
 
 	if len(possibleActions) == 0 {
-		res := getScore(currentState, myPlayerId)
+		res := getScore(currentState, myPlayerId, playerId)
 		stateScoreCache[hashedState] = res
 		return res, nil, false
 	}
