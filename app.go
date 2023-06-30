@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	_ "net/http/pprof"
 	"os"
 	_ "runtime/pprof"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -220,7 +220,7 @@ func mainCG() {
 		debugAny("best action", bestAction)
 		debugAny("best score", bestScore)
 
-		currentState = applyAction(currentState, bestAction, myPlayerId)
+		currentState = *applyAction(&currentState, bestAction, myPlayerId)
 
 		// fmt.Fprintln(os.Stderr, "Debug messages...")
 		fmt.Println(fmt.Sprintf("%d %d %d %d", bestAction.movePosition.x, bestAction.movePosition.y, bestAction.removeTile.x, bestAction.removeTile.y)) // action: "x y" to action or "x y message" to action and speak
@@ -262,17 +262,17 @@ func findBestMove(currentState state, myPlayerId int, deadline time.Time) (bestA
 	return
 }
 
-func applyMove(currentState state, movePosition coord, playerId int) (nextState state) {
-	nextState = currentState
+func applyMove(currentState *state, movePosition coord, playerId int) *state {
+	nextState := *currentState
 	nextState.playersPosition[playerId] = movePosition
-	return
+	return &nextState
 }
 
-func applyAction(state state, action *action, playerId int) (nextState state) {
-	nextState = applyMove(state, action.movePosition, playerId)
+func applyAction(state *state, action *action, playerId int) *state {
+	nextState := applyMove(state, action.movePosition, playerId)
 	nextState.boardRemoved[action.removeTile.y][action.removeTile.x] = true
 	nextState.turn++
-	return
+	return nextState
 }
 
 func getPossibleActions(currentState state, playerId int) []action {
@@ -284,7 +284,7 @@ func getPossibleActions(currentState state, playerId int) []action {
 
 	for _, adjacentTile := range *adjacentTiles {
 		if !isTileOccupied(&currentState, &adjacentTile) && !isTileRemoved(&currentState, &adjacentTile) {
-			nextState := applyMove(currentState, adjacentTile, playerId)
+			nextState := applyMove(&currentState, adjacentTile, playerId)
 
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
 
@@ -294,7 +294,7 @@ func getPossibleActions(currentState state, playerId int) []action {
 			foundOneRemoveTile := false
 
 			for _, adjacentTileToOpponent := range *adjacentTilesToOpponent {
-				if !isTileOccupied(&nextState, &adjacentTileToOpponent) && !isTileRemoved(&nextState, &adjacentTileToOpponent) {
+				if !isTileOccupied(nextState, &adjacentTileToOpponent) && !isTileRemoved(nextState, &adjacentTileToOpponent) {
 					actions = append(actions, action{adjacentTile, adjacentTileToOpponent})
 					foundOneRemoveTile = true
 				}
@@ -304,7 +304,7 @@ func getPossibleActions(currentState state, playerId int) []action {
 				for y := 0; y < HEIGHT; y++ {
 					for x := 0; x < WIDTH; x++ {
 						c := coord{x, y}
-						if !isTileOccupied(&nextState, &c) && !isTileRemoved(&nextState, &c) {
+						if !isTileOccupied(nextState, &c) && !isTileRemoved(nextState, &c) {
 							actions = append(actions, action{adjacentTile, c})
 						}
 					}
@@ -553,8 +553,8 @@ func hashState(currentState state) string {
 }
 
 type actionWithStateAndScore struct {
-	action action
-	state  state
+	action *action
+	state  *state
 	score  int
 }
 
@@ -590,19 +590,16 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 
 	// for each possible action, we apply it and score the resulting state
 	actionWithStatesAndScores := make([]actionWithStateAndScore, len(possibleActions))
-	for i, possibleAction := range possibleActions {
-		nextState := applyAction(currentState, &possibleAction, playerId)
-		scoreNextState := getScorePossibleAction(nextState, myPlayerId)
+	for i := 0; i < len(possibleActions); i++ {
+		possibleAction := &(possibleActions[i])
+		nextState := applyAction(&currentState, possibleAction, playerId)
+		scoreNextState := 0
 		actionWithStatesAndScores[i] = actionWithStateAndScore{possibleAction, nextState, scoreNextState}
 	}
 
-	// ordering moves by score
-	sort.Slice(actionWithStatesAndScores, func(i, j int) bool {
-		if maximizingPlayer {
-			return actionWithStatesAndScores[i].score > actionWithStatesAndScores[j].score
-		} else {
-			return actionWithStatesAndScores[i].score < actionWithStatesAndScores[j].score
-		}
+	// ordering moves by random
+	rand.Shuffle(len(actionWithStatesAndScores), func(i, j int) {
+		actionWithStatesAndScores[i], actionWithStatesAndScores[j] = actionWithStatesAndScores[j], actionWithStatesAndScores[i]
 	})
 
 	if maximizingPlayer {
@@ -611,7 +608,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 
 		for _, possibleAction := range actionWithStatesAndScores {
 			nextState := possibleAction.state
-			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, false, alpha, beta, startedAt)
+			value, _, isTimeOverSkip := minimax(*nextState, depth-1, myPlayerId, false, alpha, beta, startedAt)
 
 			if isTimeOverSkip {
 				return 0, nil, true
@@ -620,7 +617,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 			if value > bestMoveValue {
 				bestMoveValue = value
 				possibleActionCopy := possibleAction.action
-				bestMove = &possibleActionCopy
+				bestMove = possibleActionCopy
 			}
 
 			// Update alpha value
@@ -638,7 +635,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 
 		for _, possibleAction := range actionWithStatesAndScores {
 			nextState := possibleAction.state
-			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, true, alpha, beta, startedAt)
+			value, _, isTimeOverSkip := minimax(*nextState, depth-1, myPlayerId, true, alpha, beta, startedAt)
 
 			if isTimeOverSkip {
 				return 0, nil, true
@@ -647,7 +644,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 			if value < bestMoveValue {
 				bestMoveValue = value
 				possibleActionCopy := possibleAction.action
-				bestMove = &possibleActionCopy
+				bestMove = possibleActionCopy
 			}
 
 			// Update beta value
