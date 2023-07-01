@@ -319,6 +319,8 @@ func assert(condition bool, message string) {
 }
 
 func getPossibleActions(currentState *state, playerId uint8) []action {
+	allowNotNeighbor := true
+
 	actions := make([]action, 0)
 
 	myPosition := currentState.playersPosition[playerId]
@@ -331,24 +333,35 @@ func getPossibleActions(currentState *state, playerId uint8) []action {
 
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
 
-			opponentPosition := currentState.playersPosition[1-playerId]
-			adjacentTilesToOpponent := getAdjacentTiles(opponentPosition)
-
-			foundOneRemoveTile := false
-
-			for _, adjacentTileToOpponent := range *adjacentTilesToOpponent {
-				if !isTileOccupied(nextState, &adjacentTileToOpponent) && !isTileRemoved(nextState, &adjacentTileToOpponent) {
-					actions = append(actions, action{adjacentTile, adjacentTileToOpponent})
-					foundOneRemoveTile = true
-				}
-			}
-
-			if !foundOneRemoveTile {
+			if allowNotNeighbor {
 				for y := uint8(0); y < HEIGHT; y++ {
 					for x := uint8(0); x < WIDTH; x++ {
 						c := coord{x, y}
 						if !isTileOccupied(nextState, &c) && !isTileRemoved(nextState, &c) {
 							actions = append(actions, action{adjacentTile, c})
+						}
+					}
+				}
+			} else {
+				opponentPosition := currentState.playersPosition[1-playerId]
+				adjacentTilesToOpponent := getAdjacentTiles(opponentPosition)
+
+				foundOneRemoveTile := false
+
+				for _, adjacentTileToOpponent := range *adjacentTilesToOpponent {
+					if !isTileOccupied(nextState, &adjacentTileToOpponent) && !isTileRemoved(nextState, &adjacentTileToOpponent) {
+						actions = append(actions, action{adjacentTile, adjacentTileToOpponent})
+						foundOneRemoveTile = true
+					}
+				}
+
+				if !foundOneRemoveTile {
+					for y := uint8(0); y < HEIGHT; y++ {
+						for x := uint8(0); x < WIDTH; x++ {
+							c := coord{x, y}
+							if !isTileOccupied(nextState, &c) && !isTileRemoved(nextState, &c) {
+								actions = append(actions, action{adjacentTile, c})
+							}
 						}
 					}
 				}
@@ -478,7 +491,7 @@ func getScore(currentState *state, myPlayerId uint8, currentPlayerId uint8) int 
 		bonusEnd -= 1000000 / 2
 	}
 
-	return bonusEnd + myPlayerCellsCount - opponentCellsCount + 10*myPossibleActions - 10*opponentPossibleActions
+	return bonusEnd + myPlayerCellsCount - opponentCellsCount + 256*myPossibleActions - 256*opponentPossibleActions
 }
 
 func getScorePossibleAction(currentState *state, myPlayerId uint8) int {
@@ -572,9 +585,10 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 
 var stateScoreCache = make(map[string]int)
 
-func hashState(currentState *state) string {
-	var strBuilder strings.Builder
+var strBuilder = strings.Builder{}
 
+func hashState(currentState *state) string {
+	strBuilder.Reset()
 	strBuilder.Grow(WIDTH*HEIGHT + 4)
 
 	for y := 0; y < HEIGHT; y++ {
@@ -591,7 +605,6 @@ func hashState(currentState *state) string {
 		strBuilder.WriteString(strconv.Itoa(int(currentState.playersPosition[playerId].x)))
 		strBuilder.WriteString(strconv.Itoa(int(currentState.playersPosition[playerId].y)))
 	}
-
 	return strBuilder.String()
 }
 
