@@ -14,3 +14,7 @@ bench-profile-cpu:
 
 bench-profile-mem:
 	LOCAL=true go test -bench=. -memprofile=mem.prof
+
+cpu: bench-profile-cpu view-profile-cpu
+
+mem: bench-profile-mem view-profile-mem
