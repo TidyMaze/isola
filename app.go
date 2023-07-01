@@ -145,7 +145,7 @@ func mainLocal() {
 
 	deadline := startedAt.Add(10000 * time.Millisecond)
 
-	bestMove, bestScore := findBestMove(state, 0, deadline)
+	bestMove, bestScore := findBestMove(&state, 0, deadline)
 
 	debugAny("best move", bestMove)
 	debugAny("best score", bestScore)
@@ -165,7 +165,7 @@ func mainCG() {
 
 	playerPosition := coord{playerPositionX, playerPositionY}
 
-	myPlayerId := 0
+	myPlayerId := uint8(0)
 
 	if playerPositionY == 0 {
 		myPlayerId = 1
@@ -216,7 +216,7 @@ func mainCG() {
 
 		debugAny("current state", currentState)
 
-		bestAction, bestScore := findBestMove(currentState, myPlayerId, deadline)
+		bestAction, bestScore := findBestMove(&currentState, myPlayerId, deadline)
 
 		debugAny("best action", bestAction)
 		debugAny("best score", bestScore)
@@ -236,7 +236,7 @@ func isTimeOver(deadline time.Time) bool {
 	return time.Now().After(deadline)
 }
 
-func findBestMove(currentState state, myPlayerId int, deadline time.Time) (bestAction *action, bestScore int) {
+func findBestMove(currentState *state, myPlayerId uint8, deadline time.Time) (bestAction *action, bestScore int) {
 	bestAction = nil
 	bestScore = -1000000
 
@@ -263,13 +263,13 @@ func findBestMove(currentState state, myPlayerId int, deadline time.Time) (bestA
 	return
 }
 
-func applyMove(currentState *state, movePosition coord, playerId int) *state {
+func applyMove(currentState *state, movePosition coord, playerId uint8) *state {
 	nextState := *currentState
 	nextState.playersPosition[playerId] = movePosition
 	return &nextState
 }
 
-func applyAction(state *state, action *action, playerId int) *state {
+func applyAction(state *state, action *action, playerId uint8) *state {
 	nextState := applyMove(state, action.movePosition, playerId)
 	nextState.boardRemoved[action.removeTile.y][action.removeTile.x] = true
 	nextState.turn++
@@ -282,7 +282,7 @@ func assert(condition bool, message string) {
 	}
 }
 
-func getPossibleActions(currentState state, playerId int) []action {
+func getPossibleActions(currentState *state, playerId uint8) []action {
 	actions := make([]action, 0)
 
 	myPosition := currentState.playersPosition[playerId]
@@ -290,8 +290,8 @@ func getPossibleActions(currentState state, playerId int) []action {
 	adjacentTiles := getAdjacentTiles(myPosition)
 
 	for _, adjacentTile := range *adjacentTiles {
-		if !isTileOccupied(&currentState, &adjacentTile) && !isTileRemoved(&currentState, &adjacentTile) {
-			nextState := applyMove(&currentState, adjacentTile, playerId)
+		if !isTileOccupied(currentState, &adjacentTile) && !isTileRemoved(currentState, &adjacentTile) {
+			nextState := applyMove(currentState, adjacentTile, playerId)
 
 			//debugAny(fmt.Sprintf("next state for %v", adjacentTile), nextState)
 
@@ -323,7 +323,7 @@ func getPossibleActions(currentState state, playerId int) []action {
 	return actions
 }
 
-func getPossibleActionsCount(currentState state, playerId int) int {
+func getPossibleActionsCount(currentState *state, playerId uint8) int {
 	count := 0
 
 	myPosition := currentState.playersPosition[playerId]
@@ -331,7 +331,7 @@ func getPossibleActionsCount(currentState state, playerId int) int {
 	adjacentTiles := getAdjacentTiles(myPosition)
 
 	for _, adjacentTile := range *adjacentTiles {
-		if !isTileOccupied(&currentState, &adjacentTile) && !isTileRemoved(&currentState, &adjacentTile) {
+		if !isTileOccupied(currentState, &adjacentTile) && !isTileRemoved(currentState, &adjacentTile) {
 			count++
 		}
 	}
@@ -417,7 +417,7 @@ func isTileRemoved(currentState *state, position *coord) bool {
 
 var distanceFromPlayer [2][WIDTH * HEIGHT]int
 
-func getScore(currentState state, myPlayerId int, currentPlayerId int) int {
+func getScore(currentState *state, myPlayerId uint8, currentPlayerId uint8) int {
 	myPossibleActions := getPossibleActionsCount(currentState, myPlayerId)
 	opponentPossibleActions := getPossibleActionsCount(currentState, 1-myPlayerId)
 
@@ -445,7 +445,7 @@ func getScore(currentState state, myPlayerId int, currentPlayerId int) int {
 	return bonusEnd + myPlayerCellsCount - opponentCellsCount + 10*myPossibleActions - 10*opponentPossibleActions
 }
 
-func getScorePossibleAction(currentState state, myPlayerId int) int {
+func getScorePossibleAction(currentState *state, myPlayerId uint8) int {
 	myPossibleActions := getPossibleActionsCount(currentState, myPlayerId)
 	opponentPossibleActions := getPossibleActionsCount(currentState, 1-myPlayerId)
 
@@ -463,7 +463,7 @@ func getScorePossibleAction(currentState state, myPlayerId int) int {
 	return bonusEnd + 10*myPossibleActions - 10*opponentPossibleActions
 }
 
-func countPartitionCells(currentState state, myPlayerId int) (int, int) {
+func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 	// we use a BFS to find all the tiles that are reachable from a player
 
 	for i := 0; i < WIDTH*HEIGHT; i++ {
@@ -487,7 +487,7 @@ func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 			for _, adj := range *adjacentTiles {
 				tileIndex := adj.y*WIDTH + adj.x
 
-				if !isTileOccupied(&currentState, &adj) && !isTileRemoved(&currentState, &adj) && distanceFromPlayer[playerId][tileIndex] == -1 {
+				if !isTileOccupied(currentState, &adj) && !isTileRemoved(currentState, &adj) && distanceFromPlayer[playerId][tileIndex] == -1 {
 					distanceFromPlayer[playerId][tileIndex] = distanceFromPlayer[playerId][currentPosition.y*WIDTH+currentPosition.x] + 1
 					queue = append(queue, adj)
 				}
@@ -523,9 +523,9 @@ func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 			if playerToOwn == -1 {
 				// if the tile is reachable by both players at the same distance, it is not part of the partition
 				continue
-			} else if playerToOwn == myPlayerId {
+			} else if playerToOwn == int(myPlayerId) {
 				myPlayerCellsCount++
-			} else if playerToOwn == 1-myPlayerId {
+			} else if playerToOwn == int(1-myPlayerId) {
 				opponentCellsCount++
 			}
 		}
@@ -536,7 +536,7 @@ func countPartitionCells(currentState state, myPlayerId int) (int, int) {
 
 var stateScoreCache = make(map[string]int)
 
-func hashState(currentState state) string {
+func hashState(currentState *state) string {
 	var strBuilder strings.Builder
 
 	strBuilder.Grow(WIDTH*HEIGHT + 4)
@@ -565,14 +565,14 @@ type actionWithStateAndScore struct {
 	score  int
 }
 
-func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer bool, alpha int, beta int, startedAt time.Time) (bestMoveValue int, bestMove *action, isTimeOverSkip bool) {
+func minimax(currentState *state, depth int, myPlayerId uint8, maximizingPlayer bool, alpha int, beta int, startedAt time.Time) (bestMoveValue int, bestMove *action, isTimeOverSkip bool) {
 	if isTimeOver(startedAt) {
 		return 0, nil, true
 	}
 
 	hashedState := hashState(currentState)
 
-	playerId := 0
+	playerId := uint8(0)
 	if !maximizingPlayer {
 		playerId = 1
 	}
@@ -599,7 +599,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 	actionWithStatesAndScores := make([]actionWithStateAndScore, len(possibleActions))
 	for i := 0; i < len(possibleActions); i++ {
 		possibleAction := &(possibleActions[i])
-		nextState := applyAction(&currentState, possibleAction, playerId)
+		nextState := applyAction(currentState, possibleAction, playerId)
 		scoreNextState := 0
 		actionWithStatesAndScores[i] = actionWithStateAndScore{possibleAction, nextState, scoreNextState}
 	}
@@ -616,7 +616,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 		for i := 0; i < len(actionWithStatesAndScores); i++ {
 			possibleAction := &(actionWithStatesAndScores[i])
 			nextState := possibleAction.state
-			value, _, isTimeOverSkip := minimax(*nextState, depth-1, myPlayerId, false, alpha, beta, startedAt)
+			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, false, alpha, beta, startedAt)
 
 			if isTimeOverSkip {
 				return 0, nil, true
@@ -644,7 +644,7 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 		for i := 0; i < len(actionWithStatesAndScores); i++ {
 			possibleAction := &(actionWithStatesAndScores[i])
 			nextState := possibleAction.state
-			value, _, isTimeOverSkip := minimax(*nextState, depth-1, myPlayerId, true, alpha, beta, startedAt)
+			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, true, alpha, beta, startedAt)
 
 			if isTimeOverSkip {
 				return 0, nil, true
