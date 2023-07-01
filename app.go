@@ -78,8 +78,37 @@ type coord struct {
 
 type state struct {
 	playersPosition [2]coord
-	boardRemoved    [81]bool
+	boardRemoved    compactBoolArray
 	turn            uint8
+}
+
+type compactBoolArray struct {
+	part1 uint64
+	part2 uint32
+}
+
+func (c *compactBoolArray) set(index uint8, value bool) {
+	if index < 64 {
+		if value {
+			c.part1 |= 1 << index
+		} else {
+			c.part1 &= ^(1 << index)
+		}
+	} else {
+		if value {
+			c.part2 |= 1 << (index - 64)
+		} else {
+			c.part2 &= ^(1 << (index - 64))
+		}
+	}
+}
+
+func (c *compactBoolArray) get(index uint8) bool {
+	if index < 64 {
+		return (c.part1 & (1 << index)) != 0
+	} else {
+		return (c.part2 & (1 << (index - 64))) != 0
+	}
 }
 
 type action struct {
@@ -139,7 +168,7 @@ func mainLocal() {
 
 	state := state{
 		playersPosition: [2]coord{{2, 6}, {8, 4}},
-		boardRemoved:    [GRID_SIZE]bool{},
+		boardRemoved:    compactBoolArray{},
 		turn:            0,
 	}
 
@@ -181,7 +210,7 @@ func mainCG() {
 
 	currentState := state{
 		playersPosition: [2]coord{playerPosition, opponentPosition},
-		boardRemoved:    [GRID_SIZE]bool{},
+		boardRemoved:    compactBoolArray{},
 		turn:            0,
 	}
 
@@ -212,7 +241,7 @@ func mainCG() {
 
 		if opponentLastRemovedTileX != -1 && opponentLastRemovedTileY != -1 {
 			index := opponentLastRemovedTileY*WIDTH + opponentLastRemovedTileX
-			currentState.boardRemoved[index] = true
+			currentState.boardRemoved.set(uint8(index), true)
 		}
 
 		currentState.playersPosition[1-myPlayerId] = coord{opponentPositionX, opponentPositionY}
@@ -275,7 +304,7 @@ func applyMove(currentState *state, movePosition coord, playerId uint8) *state {
 func applyAction(state *state, action *action, playerId uint8) *state {
 	nextState := applyMove(state, action.movePosition, playerId)
 	index := action.removeTile.y*WIDTH + action.removeTile.x
-	nextState.boardRemoved[index] = true
+	nextState.boardRemoved.set(uint8(index), true)
 	nextState.turn++
 	return nextState
 }
@@ -416,7 +445,7 @@ func isTileOccupied(currentState *state, position *coord) bool {
 }
 
 func isTileRemoved(currentState *state, position *coord) bool {
-	return currentState.boardRemoved[position.y*WIDTH+position.x]
+	return currentState.boardRemoved.get(position.y*WIDTH + position.x)
 }
 
 var distanceFromPlayer [2][WIDTH * HEIGHT]int
@@ -547,7 +576,7 @@ func hashState(currentState *state) string {
 
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
-			if currentState.boardRemoved[y*WIDTH+x] {
+			if currentState.boardRemoved.get(uint8(y*WIDTH + x)) {
 				strBuilder.WriteString("X")
 			} else {
 				strBuilder.WriteString(".")
