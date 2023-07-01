@@ -94,6 +94,7 @@ func debugAny(message string, any interface{}) {
 }
 
 func main() {
+
 	if LOCAL {
 		println("local mode")
 		mainLocal()
@@ -273,6 +274,12 @@ func applyAction(state *state, action *action, playerId int) *state {
 	nextState.boardRemoved[action.removeTile.y][action.removeTile.x] = true
 	nextState.turn++
 	return nextState
+}
+
+func assert(condition bool, message string) {
+	if !condition {
+		panic(message)
+	}
 }
 
 func getPossibleActions(currentState state, playerId int) []action {
@@ -606,7 +613,8 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 		bestMoveValue = -1000000
 		bestMove = nil
 
-		for _, possibleAction := range actionWithStatesAndScores {
+		for i := 0; i < len(actionWithStatesAndScores); i++ {
+			possibleAction := &(actionWithStatesAndScores[i])
 			nextState := possibleAction.state
 			value, _, isTimeOverSkip := minimax(*nextState, depth-1, myPlayerId, false, alpha, beta, startedAt)
 
@@ -633,7 +641,8 @@ func minimax(currentState state, depth int, myPlayerId int, maximizingPlayer boo
 		bestMoveValue = 1000000
 		bestMove = nil
 
-		for _, possibleAction := range actionWithStatesAndScores {
+		for i := 0; i < len(actionWithStatesAndScores); i++ {
+			possibleAction := &(actionWithStatesAndScores[i])
 			nextState := possibleAction.state
 			value, _, isTimeOverSkip := minimax(*nextState, depth-1, myPlayerId, true, alpha, beta, startedAt)
 
