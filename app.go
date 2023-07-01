@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	_ "net/http/pprof"
 	"os"
+	deb "runtime/debug"
 	_ "runtime/pprof"
 	"strconv"
 	"strings"
@@ -128,6 +129,8 @@ func debugAny(message string, any interface{}) {
 }
 
 func main() {
+
+	deb.SetGCPercent(-1)
 
 	if LOCAL {
 		println("local mode")
@@ -515,72 +518,96 @@ func getScorePossibleAction(currentState *state, myPlayerId uint8) int {
 func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 	// we use a BFS to find all the tiles that are reachable from a player
 
-	for i := 0; i < WIDTH*HEIGHT; i++ {
-		distanceFromPlayer[0][i] = -1
-		distanceFromPlayer[1][i] = -1
-	}
+	// -1 for first player
+	// 1 for second player
+	// 0 for no player
+	colorGrid := [HEIGHT][WIDTH]int8{}
 
-	// for each player, find the distance to each tile using BFS
-	for playerId := 0; playerId < 2; playerId++ {
-		distanceFromPlayer[playerId][currentState.playersPosition[playerId].y*WIDTH+currentState.playersPosition[playerId].x] = 0
+	discovered := [2][]coord{}
 
-		queue := make([]coord, 0, WIDTH*HEIGHT)
-		queue = append(queue, currentState.playersPosition[playerId])
-
-		for len(queue) > 0 {
-			currentPosition := queue[0]
-			queue = queue[1:]
-
-			// for each adjacent tile, if it is not occupied and not already visited, add it to the queue
-			adjacentTiles := getAdjacentTiles(currentPosition)
-			for _, adj := range *adjacentTiles {
-				tileIndex := adj.y*WIDTH + adj.x
-
-				if !isTileOccupied(currentState, &adj) && !isTileRemoved(currentState, &adj) && distanceFromPlayer[playerId][tileIndex] == -1 {
-					distanceFromPlayer[playerId][tileIndex] = distanceFromPlayer[playerId][currentPosition.y*WIDTH+currentPosition.x] + 1
-					queue = append(queue, adj)
-				}
-			}
-		}
-	}
+	discovered[0] = append(discovered[0], currentState.playersPosition[0])
+	discovered[1] = append(discovered[1], currentState.playersPosition[1])
 
 	myPlayerCellsCount := 0
 	opponentCellsCount := 0
 
-	// for each tile, find the closest player
-	for y := 0; y < HEIGHT; y++ {
-		for x := 0; x < WIDTH; x++ {
-			tileIndex := y*WIDTH + x
+	newDiscovered := [2][]coord{}
 
-			if distanceFromPlayer[0][tileIndex] == -1 && distanceFromPlayer[1][tileIndex] == -1 {
-				// if the tile is not reachable by any player, it is not part of the partition
+	for len(discovered[0]) > 0 || len(discovered[1]) > 0 {
+		newDiscovered[0] = newDiscovered[0][:0]
+		newDiscovered[1] = newDiscovered[1][:0]
+
+		for playerId := 0; playerId < 2; playerId++ {
+			for _, position := range discovered[playerId] {
+				color := getColorForPlayer(playerId)
+
+				if colorGrid[position.y][position.x] != 0 {
+					continue
+				}
+
+				colorGrid[position.y][position.x] = color
+
+				adjacentTiles := getAdjacentTiles(position)
+				for _, adj := range *adjacentTiles {
+					if !isTileOccupied(currentState, &adj) && !isTileRemoved(currentState, &adj) && colorGrid[adj.y][adj.x] == 0 {
+						newDiscovered[playerId] = append(newDiscovered[playerId], adj)
+					}
+				}
+			}
+		}
+
+		// for all the discovered tiles that are only discovered by one player, we can assign them to this player
+		sharedDiscovered := intersection(newDiscovered[0], newDiscovered[1])
+
+		for _, position := range sharedDiscovered {
+			colorGrid[position.y][position.x] = 42
+		}
+
+		for _, position := range newDiscovered[0] {
+			if colorGrid[position.y][position.x] != 0 {
 				continue
 			}
+			colorGrid[position.y][position.x] = -1
+			myPlayerCellsCount++
+		}
 
-			playerToOwn := -1
-
-			if distanceFromPlayer[0][tileIndex] == -1 && distanceFromPlayer[1][tileIndex] != -1 {
-				playerToOwn = 1
-			} else if distanceFromPlayer[0][tileIndex] != -1 && distanceFromPlayer[1][tileIndex] == -1 {
-				playerToOwn = 0
-			} else if distanceFromPlayer[0][tileIndex] < distanceFromPlayer[1][tileIndex] {
-				playerToOwn = 0
-			} else if distanceFromPlayer[0][tileIndex] > distanceFromPlayer[1][tileIndex] {
-				playerToOwn = 1
-			}
-
-			if playerToOwn == -1 {
-				// if the tile is reachable by both players at the same distance, it is not part of the partition
+		for _, position := range newDiscovered[1] {
+			if colorGrid[position.y][position.x] != 0 {
 				continue
-			} else if playerToOwn == int(myPlayerId) {
-				myPlayerCellsCount++
-			} else if playerToOwn == int(1-myPlayerId) {
-				opponentCellsCount++
+			}
+			colorGrid[position.y][position.x] = 1
+			opponentCellsCount++
+		}
+
+		discovered[0] = newDiscovered[0]
+		discovered[1] = newDiscovered[1]
+	}
+
+	return myPlayerCellsCount, opponentCellsCount
+}
+
+func intersection(a []coord, b []coord) []coord {
+	var result []coord
+
+	for _, aCoord := range a {
+		for _, bCoord := range b {
+			if aCoord.x == bCoord.x && aCoord.y == bCoord.y {
+				result = append(result, aCoord)
 			}
 		}
 	}
 
-	return myPlayerCellsCount, opponentCellsCount
+	return result
+}
+
+func getColorForPlayer(playerId int) int8 {
+	color := int8(0)
+	if playerId == 0 {
+		color = -1
+	} else {
+		color = 1
+	}
+	return color
 }
 
 var stateScoreCache = make(map[string]int)
@@ -630,6 +657,7 @@ func minimax(currentState *state, depth int, myPlayerId uint8, maximizingPlayer 
 		return score, nil, false
 	}
 
+	// todo: merge with no possible action
 	if depth == 0 {
 		res := getScore(currentState, myPlayerId, playerId)
 		stateScoreCache[hashedState] = res
