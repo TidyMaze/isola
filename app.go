@@ -82,6 +82,9 @@ type state struct {
 	turn            uint8
 }
 
+/**
+ * A compact boolean array that uses 96 bits to at least the 81 bits required to store a WIDTH*HEIGHT boolean array.
+ */
 type compactBoolArray struct {
 	part1 uint64
 	part2 uint32
