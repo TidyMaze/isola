@@ -69,6 +69,8 @@ var LOCAL = os.Getenv("LOCAL") == "true"
 const WIDTH = 9
 const HEIGHT = 9
 
+const GRID_SIZE = WIDTH * HEIGHT
+
 type coord struct {
 	x uint8
 	y uint8
@@ -76,7 +78,7 @@ type coord struct {
 
 type state struct {
 	playersPosition [2]coord
-	boardRemoved    [HEIGHT][WIDTH]bool
+	boardRemoved    [81]bool
 	turn            uint8
 }
 
@@ -137,7 +139,7 @@ func mainLocal() {
 
 	state := state{
 		playersPosition: [2]coord{{2, 6}, {8, 4}},
-		boardRemoved:    [HEIGHT][WIDTH]bool{},
+		boardRemoved:    [GRID_SIZE]bool{},
 		turn:            0,
 	}
 
@@ -179,7 +181,7 @@ func mainCG() {
 
 	currentState := state{
 		playersPosition: [2]coord{playerPosition, opponentPosition},
-		boardRemoved:    [HEIGHT][WIDTH]bool{},
+		boardRemoved:    [GRID_SIZE]bool{},
 		turn:            0,
 	}
 
@@ -209,7 +211,8 @@ func mainCG() {
 		fmt.Scan(&opponentLastRemovedTileY)
 
 		if opponentLastRemovedTileX != -1 && opponentLastRemovedTileY != -1 {
-			currentState.boardRemoved[opponentLastRemovedTileY][opponentLastRemovedTileX] = true
+			index := opponentLastRemovedTileY*WIDTH + opponentLastRemovedTileX
+			currentState.boardRemoved[index] = true
 		}
 
 		currentState.playersPosition[1-myPlayerId] = coord{opponentPositionX, opponentPositionY}
@@ -271,7 +274,8 @@ func applyMove(currentState *state, movePosition coord, playerId uint8) *state {
 
 func applyAction(state *state, action *action, playerId uint8) *state {
 	nextState := applyMove(state, action.movePosition, playerId)
-	nextState.boardRemoved[action.removeTile.y][action.removeTile.x] = true
+	index := action.removeTile.y*WIDTH + action.removeTile.x
+	nextState.boardRemoved[index] = true
 	nextState.turn++
 	return nextState
 }
@@ -412,7 +416,7 @@ func isTileOccupied(currentState *state, position *coord) bool {
 }
 
 func isTileRemoved(currentState *state, position *coord) bool {
-	return currentState.boardRemoved[position.y][position.x]
+	return currentState.boardRemoved[position.y*WIDTH+position.x]
 }
 
 var distanceFromPlayer [2][WIDTH * HEIGHT]int
@@ -543,7 +547,7 @@ func hashState(currentState *state) string {
 
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
-			if currentState.boardRemoved[y][x] {
+			if currentState.boardRemoved[y*WIDTH+x] {
 				strBuilder.WriteString("X")
 			} else {
 				strBuilder.WriteString(".")
