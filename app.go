@@ -492,7 +492,7 @@ func getScore(currentState *state, myPlayerId uint8, currentPlayerId uint8) int 
 	opponentPossibleActions := getPossibleActionsCount(currentState, 1-myPlayerId)
 
 	// a good action is a action that maximize my player closest coords and minimize opponent closest coords
-	//myPlayerCellsCount, opponentCellsCount := countPartitionCells(currentState, myPlayerId)
+	myPlayerCellsCount, opponentCellsCount := countPartitionCells(currentState, myPlayerId)
 
 	// old for check
 	//myPlayerCellsCountOld, opponentCellsCountOld := countPartitionCellsOld(currentState, myPlayerId)
@@ -520,7 +520,7 @@ func getScore(currentState *state, myPlayerId uint8, currentPlayerId uint8) int 
 		bonusEnd -= 1000000 / 2
 	}
 
-	return bonusEnd /*+ myPlayerCellsCount - opponentCellsCount*/ + 256*myPossibleActions - 256*opponentPossibleActions
+	return bonusEnd + myPlayerCellsCount - opponentCellsCount + 256*myPossibleActions - 256*opponentPossibleActions
 }
 
 func getScorePossibleAction(currentState *state, myPlayerId uint8) int {
