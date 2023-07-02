@@ -817,11 +817,11 @@ func minimax(currentState *state, depth int, myPlayerId uint8, maximizingPlayer 
 
 	// for each possible action, we apply it and score the resulting state
 	actionWithStatesAndScores := make([]actionWithStateAndScore, len(possibleActions))
-	for i := 0; i < len(possibleActions); i++ {
-		possibleAction := &(possibleActions[i])
-		nextState := applyAction(currentState, possibleAction, playerId)
+	for i, possibleAction := range possibleActions {
+		possibleAction := possibleAction
+		nextState := applyAction(currentState, &possibleAction, playerId)
 		scoreNextState := 0
-		actionWithStatesAndScores[i] = actionWithStateAndScore{possibleAction, nextState, scoreNextState}
+		actionWithStatesAndScores[i] = actionWithStateAndScore{&possibleAction, nextState, scoreNextState}
 	}
 
 	// ordering moves by random
