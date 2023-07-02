@@ -623,6 +623,11 @@ func contains(slice []coord, element coord) bool {
 	return false
 }
 
+var newDiscovered = [2][]coord{
+	make([]coord, 0, WIDTH*HEIGHT),
+	make([]coord, 0, WIDTH*HEIGHT),
+}
+
 func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 	// we use a BFS to find all the tiles that are reachable from a player
 
@@ -641,8 +646,6 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 
 	myPlayerCellsCount := 1
 	opponentCellsCount := 1
-
-	newDiscovered := [2][]coord{}
 
 	for len(discovered[0]) > 0 || len(discovered[1]) > 0 {
 
