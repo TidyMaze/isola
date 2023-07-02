@@ -653,12 +653,15 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 		newDiscovered[1] = newDiscovered[1][:0]
 
 		for playerId := 0; playerId < 2; playerId++ {
+			newDiscoveredGrid := [HEIGHT][WIDTH]bool{}
+
 			for _, position := range discovered[playerId] {
 
 				adjacentTiles := getAdjacentTiles(position)
 				for _, adj := range *adjacentTiles {
-					if colorGrid[adj.y][adj.x] == 0 && !isTileOccupied(currentState, &adj) && !isTileRemoved(currentState, &adj) && !contains(newDiscovered[playerId], adj) {
+					if colorGrid[adj.y][adj.x] == 0 && !isTileOccupied(currentState, &adj) && !isTileRemoved(currentState, &adj) && !newDiscoveredGrid[adj.y][adj.x] {
 						newDiscovered[playerId] = append(newDiscovered[playerId], adj)
+						newDiscoveredGrid[adj.y][adj.x] = true
 					}
 				}
 			}
