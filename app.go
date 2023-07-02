@@ -774,6 +774,7 @@ func hashState(currentState *state) uint64 {
 }
 
 func hashByteSlice(bytes []byte) uint64 {
+	//debugAny("hashByteSlice", bytes)
 	// fast hash function
 	var hash uint64 = 5381
 	for _, b := range bytes {
