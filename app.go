@@ -496,12 +496,12 @@ func getScore(currentState *state, myPlayerId uint8, currentPlayerId uint8) int 
 	myPlayerCellsCount, opponentCellsCount := countPartitionCells(currentState, myPlayerId)
 
 	// old for check
-	myPlayerCellsCountOld, opponentCellsCountOld := countPartitionCellsOld(currentState, myPlayerId)
+	//myPlayerCellsCountOld, opponentCellsCountOld := countPartitionCellsOld(currentState, myPlayerId)
 
-	debug(fmt.Sprintf("state %v with removed: %v", currentState, currentState.boardRemoved.show()))
+	//debug(fmt.Sprintf("state %v with removed: %v", currentState, currentState.boardRemoved.show()))
 
-	assertEqual(myPlayerCellsCount, myPlayerCellsCountOld, "myPlayerCellsCount != myPlayerCellsCountOld")
-	assertEqual(opponentCellsCount, opponentCellsCountOld, "opponentCellsCount != opponentCellsCountOld")
+	//assertEqual(myPlayerCellsCount, myPlayerCellsCountOld, "myPlayerCellsCount != myPlayerCellsCountOld")
+	//assertEqual(opponentCellsCount, opponentCellsCountOld, "opponentCellsCount != opponentCellsCountOld")
 
 	bonusEnd := 0
 
@@ -645,7 +645,7 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 
 	for len(discovered[0]) > 0 || len(discovered[1]) > 0 {
 
-		debugAny("start of loop discovered", discovered)
+		//debugAny("start of loop discovered", discovered)
 
 		// reset the new discovered tiles
 		newDiscovered[0] = newDiscovered[0][:0]
@@ -664,7 +664,7 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 		}
 
 		// for all the discovered tiles that are only discovered by one player, we can assign them to this player
-		testIntersection()
+		//testIntersection()
 		sharedDiscovered := intersection(newDiscovered[0], newDiscovered[1])
 
 		for _, position := range sharedDiscovered {
@@ -693,11 +693,11 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 		discovered[0] = append(discovered[0], newDiscovered[0]...)
 		discovered[1] = append(discovered[1], newDiscovered[1]...)
 
-		debugAny("discovered", discovered)
+		//debugAny("discovered", discovered)
 
 	}
 
-	debugAny("colorGrid", showColorGrid(colorGrid))
+	//debugAny("colorGrid", showColorGrid(colorGrid))
 
 	return myPlayerCellsCount, opponentCellsCount
 }
