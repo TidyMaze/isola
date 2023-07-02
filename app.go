@@ -757,6 +757,7 @@ func intersection(a []coord, b []coord) []coord {
 		for _, bCoord := range b {
 			if aCoord.x == bCoord.x && aCoord.y == bCoord.y {
 				result = append(result, aCoord)
+				break
 			}
 		}
 	}
