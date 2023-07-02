@@ -8,7 +8,6 @@ import (
 	"os"
 	deb "runtime/debug"
 	_ "runtime/pprof"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -294,7 +293,7 @@ func findBestMove(currentState *state, myPlayerId uint8, deadline time.Time) (be
 
 	// iterative deepening
 	for MaxDepth = 1; !isTimeOver(deadline) && MaxDepth < 50; MaxDepth++ {
-		stateScoreCache = make(map[string]int)
+		stateScoreCache = make(map[uint64]int)
 
 		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, -1000000, 1000000, deadline)
 		if !isTimeOverSkip {
@@ -753,29 +752,34 @@ func getColorForPlayer(playerId int) int8 {
 	return color
 }
 
-var stateScoreCache = make(map[string]int)
+var stateScoreCache = make(map[uint64]int)
 
-var strBuilder = strings.Builder{}
-
-func hashState(currentState *state) string {
-	strBuilder.Reset()
-	strBuilder.Grow(WIDTH*HEIGHT + 4)
+func hashState(currentState *state) uint64 {
+	hashBytes := make([]byte, WIDTH*HEIGHT)
 
 	for y := 0; y < HEIGHT; y++ {
 		for x := 0; x < WIDTH; x++ {
 			if currentState.boardRemoved.get(uint8(y*WIDTH + x)) {
-				strBuilder.WriteString("X")
+				hashBytes[y*WIDTH+x] = 1
 			} else {
-				strBuilder.WriteString(".")
+				hashBytes[y*WIDTH+x] = 0
 			}
 		}
 	}
 
-	for playerId := 0; playerId < 2; playerId++ {
-		strBuilder.WriteString(strconv.Itoa(int(currentState.playersPosition[playerId].x)))
-		strBuilder.WriteString(strconv.Itoa(int(currentState.playersPosition[playerId].y)))
+	hashBytes[currentState.playersPosition[0].y*WIDTH+currentState.playersPosition[0].x] = 2
+	hashBytes[currentState.playersPosition[1].y*WIDTH+currentState.playersPosition[1].x] = 3
+
+	return hashByteSlice(hashBytes)
+}
+
+func hashByteSlice(bytes []byte) uint64 {
+	// fast hash function
+	var hash uint64 = 5381
+	for _, b := range bytes {
+		hash = ((hash << 5) + hash) + uint64(b)
 	}
-	return strBuilder.String()
+	return hash
 }
 
 type actionWithStateAndScore struct {
