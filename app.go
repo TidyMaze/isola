@@ -752,7 +752,9 @@ func getColorForPlayer(playerId int) int8 {
 	return color
 }
 
-var stateScoreCache = make(map[uint64]int)
+const CACHE_SIZE = 1000000
+
+var stateScoreCache = make(map[uint64]int, CACHE_SIZE)
 
 func hashState(currentState *state) uint64 {
 	hashBytes := make([]byte, WIDTH*HEIGHT)
@@ -893,6 +895,11 @@ func minimax(currentState *state, depth int, myPlayerId uint8, maximizingPlayer 
 	}
 
 	stateScoreCache[hashedState] = bestMoveValue
+
+	if len(stateScoreCache) > CACHE_SIZE {
+		panic("cache size exceeded")
+	}
+
 	return bestMoveValue, bestMove, false
 }
 
