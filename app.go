@@ -657,7 +657,7 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 
 				adjacentTiles := getAdjacentTiles(position)
 				for _, adj := range *adjacentTiles {
-					if !isTileOccupied(currentState, &adj) && !isTileRemoved(currentState, &adj) && colorGrid[adj.y][adj.x] == 0 && !contains(newDiscovered[playerId], adj) {
+					if colorGrid[adj.y][adj.x] == 0 && !isTileOccupied(currentState, &adj) && !isTileRemoved(currentState, &adj) && !contains(newDiscovered[playerId], adj) {
 						newDiscovered[playerId] = append(newDiscovered[playerId], adj)
 					}
 				}
