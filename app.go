@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	_ "net/http/pprof"
 	"os"
-	"reflect"
 	deb "runtime/debug"
 	_ "runtime/pprof"
 	"strconv"
@@ -662,7 +661,7 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 
 				adjacentTiles := getAdjacentTiles(position)
 				for _, adj := range *adjacentTiles {
-					if colorGrid[adj.y][adj.x] == 0 && !isTileOccupied(currentState, &adj) && !isTileRemoved(currentState, &adj) && !newDiscoveredGrid[adj.y][adj.x] {
+					if colorGrid[adj.y][adj.x] == 0 && !newDiscoveredGrid[adj.y][adj.x] && !isTileOccupied(currentState, &adj) && !isTileRemoved(currentState, &adj) {
 						newDiscovered[playerId] = append(newDiscovered[playerId], adj)
 						newDiscoveredGrid[adj.y][adj.x] = true
 					}
@@ -671,7 +670,6 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 		}
 
 		// for all the discovered tiles that are only discovered by one player, we can assign them to this player
-		//testIntersection()
 		sharedDiscovered := intersection(newDiscovered[0], newDiscovered[1])
 
 		for _, position := range sharedDiscovered {
@@ -728,32 +726,6 @@ func showColorGrid(colorGrid [HEIGHT][WIDTH]int8) string {
 	}
 
 	return result
-}
-
-func testIntersection() {
-	a := []coord{
-		coord{0, 0},
-		coord{1, 0},
-		coord{2, 0},
-		coord{3, 0},
-		coord{4, 0},
-		coord{5, 0},
-		coord{6, 0},
-		coord{7, 0},
-		coord{8, 0},
-		coord{9, 0},
-	}
-
-	b := []coord{
-		coord{4, 0},
-		coord{1, 1},
-		coord{1, 0},
-	}
-
-	assert(reflect.DeepEqual(intersection(a, b), []coord{
-		coord{1, 0},
-		coord{4, 0},
-	}), "intersection")
 }
 
 func intersection(a []coord, b []coord) []coord {
