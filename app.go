@@ -292,7 +292,7 @@ func findBestMove(currentState *state, myPlayerId uint8, deadline time.Time) (be
 	var MaxDepth int
 
 	// iterative deepening
-	for MaxDepth = 1; !isTimeOver(deadline) && MaxDepth < 6; MaxDepth++ {
+	for MaxDepth = 1; !isTimeOver(deadline) && MaxDepth < 10; MaxDepth++ {
 		stateScoreCache = make(map[uint64]int)
 
 		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, -1000000, 1000000, deadline)
@@ -752,7 +752,7 @@ func getColorForPlayer(playerId int) int8 {
 	return color
 }
 
-const CACHE_SIZE = 1000000
+const CACHE_SIZE = 10000000
 
 var stateScoreCache = make(map[uint64]int, CACHE_SIZE)
 
