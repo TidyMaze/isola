@@ -614,8 +614,9 @@ func countPartitionCellsOld(currentState *state, myPlayerId uint8) (int, int) {
 }
 
 func contains(slice []coord, element coord) bool {
-	for _, a := range slice {
-		if a == element {
+	// fastest way to check if a slice contains an element
+	for i := 0; i < len(slice); i++ {
+		if slice[i] == element {
 			return true
 		}
 	}
