@@ -341,7 +341,7 @@ func assertEqual(expected interface{}, actual interface{}, message string) {
 }
 
 func getPossibleActions(currentState *state, playerId uint8) []action {
-	allowNotNeighbor := true
+	allowNotNeighbor := false
 
 	actions := make([]action, 0)
 
