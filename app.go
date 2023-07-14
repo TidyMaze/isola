@@ -547,18 +547,10 @@ var discovered = [2][]coord{}
 var newDiscoveredGrid = [HEIGHT * WIDTH]bool{}
 
 func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
-	// we use a BFS to find all the tiles that are reachable from a player
-
-	// -1 for first player
-	// 1 for second player
-	// 0 for no player
 	colorGrid := [HEIGHT * WIDTH]int8{}
 
-	discovered[0] = discovered[0][:0]
-	discovered[1] = discovered[1][:0]
-
-	discovered[0] = append(discovered[0], currentState.playersPosition[0])
-	discovered[1] = append(discovered[1], currentState.playersPosition[1])
+	discovered[0] = append(discovered[0][:0], currentState.playersPosition[0])
+	discovered[1] = append(discovered[1][:0], currentState.playersPosition[1])
 
 	colorGrid[currentState.playersPosition[0].y*WIDTH+currentState.playersPosition[0].x] = -1
 	colorGrid[currentState.playersPosition[1].y*WIDTH+currentState.playersPosition[1].x] = 1
@@ -568,12 +560,7 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 
 	for len(discovered[0]) > 0 || len(discovered[1]) > 0 {
 
-		//debugAny("start of loop discovered", discovered)
-
-		// reset the new discovered tiles
-		newDiscovered[0] = newDiscovered[0][:0]
-		newDiscovered[1] = newDiscovered[1][:0]
-
+		newDiscovered[0], newDiscovered[1] = newDiscovered[0][:0], newDiscovered[1][:0]
 		for playerId := 0; playerId < 2; playerId++ {
 			newDiscoveredGrid = [HEIGHT * WIDTH]bool{}
 
@@ -591,33 +578,15 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 			}
 		}
 
-		// mark the tiles that are discovered by both players
 		discoveredByBoth := intersection(newDiscovered[0], newDiscovered[1])
 		for _, position := range discoveredByBoth {
 			colorGrid[position.y*WIDTH+position.x] = 42
 		}
 
-		for _, position := range newDiscovered[0] {
-			if colorGrid[position.y*WIDTH+position.x] != 0 {
-				continue
-			}
-			colorGrid[position.y*WIDTH+position.x] = -1
-			myPlayerCellsCount++
-		}
+		myPlayerCellsCount = updateCellsCount(&colorGrid, newDiscovered[0], -1, myPlayerCellsCount)
+		opponentCellsCount = updateCellsCount(&colorGrid, newDiscovered[1], 1, opponentCellsCount)
 
-		for _, position := range newDiscovered[1] {
-			if colorGrid[position.y*WIDTH+position.x] != 0 {
-				continue
-			}
-			colorGrid[position.y*WIDTH+position.x] = 1
-			opponentCellsCount++
-		}
-
-		discovered[0] = discovered[0][:0]
-		discovered[1] = discovered[1][:0]
-
-		discovered[0] = append(discovered[0], newDiscovered[0]...)
-		discovered[1] = append(discovered[1], newDiscovered[1]...)
+		discovered[0], discovered[1] = newDiscovered[0], newDiscovered[1]
 	}
 
 	return myPlayerCellsCount, opponentCellsCount
