@@ -545,7 +545,6 @@ var newDiscovered = [2][]coord{
 
 var discovered = [2][]coord{}
 var newDiscoveredGrid = [HEIGHT * WIDTH]bool{}
-var discoveredCountGrid = [HEIGHT * WIDTH]int8{}
 
 func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 	// we use a BFS to find all the tiles that are reachable from a player
@@ -575,8 +574,6 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 		newDiscovered[0] = newDiscovered[0][:0]
 		newDiscovered[1] = newDiscovered[1][:0]
 
-		discoveredCountGrid = [HEIGHT * WIDTH]int8{}
-
 		for playerId := 0; playerId < 2; playerId++ {
 			newDiscoveredGrid = [HEIGHT * WIDTH]bool{}
 
@@ -589,19 +586,15 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 					if colorGrid[adjIndex] == 0 && !newDiscoveredGrid[adjIndex] && !isTileOccupied(currentState, &adj) && !isTileRemoved(currentState, &adj) {
 						newDiscovered[playerId] = append(newDiscovered[playerId], adj)
 						newDiscoveredGrid[adj.y*WIDTH+adj.x] = true
-						discoveredCountGrid[adj.y*WIDTH+adj.x]++
 					}
 				}
 			}
 		}
 
 		// mark the tiles that are discovered by both players
-		for y := 0; y < HEIGHT; y++ {
-			for x := 0; x < WIDTH; x++ {
-				if discoveredCountGrid[y*WIDTH+x] > 1 {
-					colorGrid[y*WIDTH+x] = 42
-				}
-			}
+		discoveredByBoth := intersection(newDiscovered[0], newDiscovered[1])
+		for _, position := range discoveredByBoth {
+			colorGrid[position.y*WIDTH+position.x] = 42
 		}
 
 		for _, position := range newDiscovered[0] {
@@ -625,25 +618,33 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 
 		discovered[0] = append(discovered[0], newDiscovered[0]...)
 		discovered[1] = append(discovered[1], newDiscovered[1]...)
-
-		//debugAny("discovered", discovered)
-
 	}
-
-	//debugAny("colorGrid", showColorGrid(colorGrid))
 
 	return myPlayerCellsCount, opponentCellsCount
 }
 
+func updateCellsCount(colorGrid *[HEIGHT * WIDTH]int8, discoveredCells []coord, color int8, count int) int {
+	for _, position := range discoveredCells {
+		if colorGrid[position.y*WIDTH+position.x] != 0 {
+			continue
+		}
+		colorGrid[position.y*WIDTH+position.x] = color
+		count++
+	}
+	return count
+}
+
 func intersection(a []coord, b []coord) []coord {
+	set := make(map[coord]bool)
 	var result []coord
 
-	for _, aCoord := range a {
-		for _, bCoord := range b {
-			if aCoord.x == bCoord.x && aCoord.y == bCoord.y {
-				result = append(result, aCoord)
-				break
-			}
+	for _, coord := range a {
+		set[coord] = true
+	}
+
+	for _, coord := range b {
+		if set[coord] {
+			result = append(result, coord)
 		}
 	}
 
