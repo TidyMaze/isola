@@ -249,7 +249,7 @@ func findBestMove(currentState *state, myPlayerId uint8, deadline time.Time) (be
 	for MaxDepth = 1; !isTimeOver(deadline) && MaxDepth < 50; MaxDepth++ {
 		stateScoreCache = make(map[string]int)
 
-		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, -1000000, 1000000, deadline)
+		depthBestScore, depthBestAction, isTimeOverSkip := minimax(currentState, MaxDepth, myPlayerId, true, -1000000, 1000000, deadline, bestAction)
 		if !isTimeOverSkip {
 			bestScore = depthBestScore
 			bestAction = depthBestAction
@@ -467,7 +467,7 @@ func getScorePossibleAction(currentState *state, myPlayerId uint8) int {
 	return bonusEnd + 10*myPossibleActions - 10*opponentPossibleActions
 }
 
-func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
+func countPartitionCellsOld(currentState *state, myPlayerId uint8) (int, int) {
 	// we use a BFS to find all the tiles that are reachable from a player
 
 	for i := 0; i < WIDTH*HEIGHT; i++ {
@@ -538,6 +538,118 @@ func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
 	return myPlayerCellsCount, opponentCellsCount
 }
 
+var newDiscovered = [2][]coord{
+	make([]coord, 0, WIDTH*HEIGHT),
+	make([]coord, 0, WIDTH*HEIGHT),
+}
+
+var discovered = [2][]coord{}
+var newDiscoveredGrid = [HEIGHT * WIDTH]bool{}
+var discoveredCountGrid = [HEIGHT * WIDTH]int8{}
+
+func countPartitionCells(currentState *state, myPlayerId uint8) (int, int) {
+	// we use a BFS to find all the tiles that are reachable from a player
+
+	// -1 for first player
+	// 1 for second player
+	// 0 for no player
+	colorGrid := [HEIGHT * WIDTH]int8{}
+
+	discovered[0] = discovered[0][:0]
+	discovered[1] = discovered[1][:0]
+
+	discovered[0] = append(discovered[0], currentState.playersPosition[0])
+	discovered[1] = append(discovered[1], currentState.playersPosition[1])
+
+	colorGrid[currentState.playersPosition[0].y*WIDTH+currentState.playersPosition[0].x] = -1
+	colorGrid[currentState.playersPosition[1].y*WIDTH+currentState.playersPosition[1].x] = 1
+
+	myPlayerCellsCount := 1
+	opponentCellsCount := 1
+
+	for len(discovered[0]) > 0 || len(discovered[1]) > 0 {
+
+		//debugAny("start of loop discovered", discovered)
+
+		// reset the new discovered tiles
+		newDiscovered[0] = newDiscovered[0][:0]
+		newDiscovered[1] = newDiscovered[1][:0]
+
+		discoveredCountGrid = [HEIGHT * WIDTH]int8{}
+
+		for playerId := 0; playerId < 2; playerId++ {
+			newDiscoveredGrid = [HEIGHT * WIDTH]bool{}
+
+			for _, position := range discovered[playerId] {
+
+				adjacentTiles := getAdjacentTiles(position)
+				for _, adj := range *adjacentTiles {
+					adjIndex := adj.y*WIDTH + adj.x
+
+					if colorGrid[adjIndex] == 0 && !newDiscoveredGrid[adjIndex] && !isTileOccupied(currentState, &adj) && !isTileRemoved(currentState, &adj) {
+						newDiscovered[playerId] = append(newDiscovered[playerId], adj)
+						newDiscoveredGrid[adj.y*WIDTH+adj.x] = true
+						discoveredCountGrid[adj.y*WIDTH+adj.x]++
+					}
+				}
+			}
+		}
+
+		// mark the tiles that are discovered by both players
+		for y := 0; y < HEIGHT; y++ {
+			for x := 0; x < WIDTH; x++ {
+				if discoveredCountGrid[y*WIDTH+x] > 1 {
+					colorGrid[y*WIDTH+x] = 42
+				}
+			}
+		}
+
+		for _, position := range newDiscovered[0] {
+			if colorGrid[position.y*WIDTH+position.x] != 0 {
+				continue
+			}
+			colorGrid[position.y*WIDTH+position.x] = -1
+			myPlayerCellsCount++
+		}
+
+		for _, position := range newDiscovered[1] {
+			if colorGrid[position.y*WIDTH+position.x] != 0 {
+				continue
+			}
+			colorGrid[position.y*WIDTH+position.x] = 1
+			opponentCellsCount++
+		}
+
+		discovered[0] = discovered[0][:0]
+		discovered[1] = discovered[1][:0]
+
+		discovered[0] = append(discovered[0], newDiscovered[0]...)
+		discovered[1] = append(discovered[1], newDiscovered[1]...)
+
+		//debugAny("discovered", discovered)
+
+	}
+
+	//debugAny("colorGrid", showColorGrid(colorGrid))
+
+	return myPlayerCellsCount, opponentCellsCount
+}
+
+func intersection(a []coord, b []coord) []coord {
+	var result []coord
+
+	for _, aCoord := range a {
+		for _, bCoord := range b {
+			if aCoord.x == bCoord.x && aCoord.y == bCoord.y {
+				result = append(result, aCoord)
+				break
+			}
+		}
+	}
+
+	return result
+}
+
 var stateScoreCache = make(map[string]int)
 
 func hashState(currentState *state) string {
@@ -569,7 +681,7 @@ type actionWithStateAndScore struct {
 	score  int
 }
 
-func minimax(currentState *state, depth int, myPlayerId uint8, maximizingPlayer bool, alpha int, beta int, startedAt time.Time) (bestMoveValue int, bestMove *action, isTimeOverSkip bool) {
+func minimax(currentState *state, depth int, myPlayerId uint8, maximizingPlayer bool, alpha int, beta int, startedAt time.Time, bestAction *action) (bestMoveValue int, bestMove *action, isTimeOverSkip bool) {
 	if isTimeOver(startedAt) {
 		return 0, nil, true
 	}
@@ -599,6 +711,16 @@ func minimax(currentState *state, depth int, myPlayerId uint8, maximizingPlayer 
 		return res, nil, false
 	}
 
+	// if there is a previous best action from last depth, we put it first in the list
+	//if bestAction != nil {
+	//	for i := 0; i < len(possibleActions); i++ {
+	//		if possibleActions[i] == *bestAction {
+	//			possibleActions[i], possibleActions[0] = possibleActions[0], possibleActions[i]
+	//			break
+	//		}
+	//	}
+	//}
+
 	// for each possible action, we apply it and score the resulting state
 	actionWithStatesAndScores := make([]actionWithStateAndScore, len(possibleActions))
 	for i := 0; i < len(possibleActions); i++ {
@@ -613,6 +735,16 @@ func minimax(currentState *state, depth int, myPlayerId uint8, maximizingPlayer 
 		actionWithStatesAndScores[i], actionWithStatesAndScores[j] = actionWithStatesAndScores[j], actionWithStatesAndScores[i]
 	})
 
+	// if there is a previous best action from last depth, we put it first in the list
+	if bestAction != nil {
+		for i := 0; i < len(actionWithStatesAndScores); i++ {
+			if actionWithStatesAndScores[i].action == bestAction {
+				actionWithStatesAndScores[i], actionWithStatesAndScores[0] = actionWithStatesAndScores[0], actionWithStatesAndScores[i]
+				break
+			}
+		}
+	}
+
 	if maximizingPlayer {
 		bestMoveValue = -1000000
 		bestMove = nil
@@ -620,7 +752,7 @@ func minimax(currentState *state, depth int, myPlayerId uint8, maximizingPlayer 
 		for i := 0; i < len(actionWithStatesAndScores); i++ {
 			possibleAction := &(actionWithStatesAndScores[i])
 			nextState := possibleAction.state
-			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, false, alpha, beta, startedAt)
+			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, false, alpha, beta, startedAt, nil)
 
 			if isTimeOverSkip {
 				return 0, nil, true
@@ -648,7 +780,7 @@ func minimax(currentState *state, depth int, myPlayerId uint8, maximizingPlayer 
 		for i := 0; i < len(actionWithStatesAndScores); i++ {
 			possibleAction := &(actionWithStatesAndScores[i])
 			nextState := possibleAction.state
-			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, true, alpha, beta, startedAt)
+			value, _, isTimeOverSkip := minimax(nextState, depth-1, myPlayerId, true, alpha, beta, startedAt, nil)
 
 			if isTimeOverSkip {
 				return 0, nil, true
